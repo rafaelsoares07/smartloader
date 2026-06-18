@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
+
+<!--
+    Recording (Smart Hub) feature view. Proof-of-wiring placeholder: text set by
+    RecordingViewController from the injected ModuleInfoUseCase. Styling via theme.css.
+-->
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.gertec.smartloader.recording.ui.RecordingViewController"
+           styleClass="feature-view">
+    <Label fx:id="messageLabel" styleClass="feature-message" text="…" />
+</StackPane>

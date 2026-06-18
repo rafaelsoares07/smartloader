@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+    Dashboard home view. Reproduces the mockup frame (4 metric cards + 3 panels) but with
+    HONEST STATIC PLACEHOLDER content only: dashes for numbers and empty lists.
+    No fake metrics or statuses. Each widget is marked to be wired to a real source later.
+    Colors come from theme.css via styleClass.
+-->
+<ScrollPane fitToWidth="true" styleClass="dashboard-scroll"
+            xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.gertec.smartloader.app.DashboardController">
+    <VBox styleClass="dashboard">
+        <padding>
+            <Insets top="24" right="24" bottom="24" left="24"/>
+        </padding>
+
+        <Label text="Dashboard" styleClass="page-title"/>
+
+        <!-- 4 metric cards. TODO (future increment): bind values to real data sources. -->
+        <FlowPane styleClass="metric-row" hgap="16" vgap="16">
+            <VBox styleClass="metric-card">
+                <Label text="Terminais conectados" styleClass="metric-caption"/>
+                <Label text="—" styleClass="metric-value"/>
+            </VBox>
+            <VBox styleClass="metric-card">
+                <Label text="Perfis no catálogo" styleClass="metric-caption"/>
+                <Label text="—" styleClass="metric-value"/>
+            </VBox>
+            <VBox styleClass="metric-card">
+                <Label text="Gravações hoje" styleClass="metric-caption"/>
+                <Label text="—" styleClass="metric-value"/>
+            </VBox>
+            <VBox styleClass="metric-card">
+                <Label text="Pacotes GPK" styleClass="metric-caption"/>
+                <Label text="—" styleClass="metric-value"/>
+            </VBox>
+        </FlowPane>
+
+        <!-- Panels row -->
+        <HBox styleClass="panel-row" spacing="16">
+
+            <!-- Panel: Módulos do Sistema. TODO: wire to real module health. -->
+            <VBox styleClass="panel" HBox.hgrow="ALWAYS">
+                <Label text="Módulos do Sistema" styleClass="panel-title"/>
+                <Label text="sem dados" styleClass="panel-empty"/>
+            </VBox>
+
+            <!-- Panel: Gravações Recentes. TODO: wire to recording history. -->
+            <VBox styleClass="panel" HBox.hgrow="ALWAYS">
+                <Label text="Gravações Recentes" styleClass="panel-title"/>
+                <Label text="sem gravações ainda" styleClass="panel-empty"/>
+            </VBox>
+
+            <!-- Panel: Notificações. TODO: wire to notification source. -->
+            <VBox styleClass="panel" HBox.hgrow="ALWAYS">
+                <Label text="Notificações" styleClass="panel-title"/>
+                <Label text="sem notificações" styleClass="panel-empty"/>
+            </VBox>
+        </HBox>
+
+        <Region VBox.vgrow="ALWAYS"/>
+    </VBox>
+</ScrollPane>

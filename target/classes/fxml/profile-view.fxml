@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
+
+<!--
+    Profile (Smart Package) feature view. Proof-of-wiring placeholder: text set by
+    ProfileViewController from the injected ModuleInfoUseCase. Styling via theme.css.
+-->
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.gertec.smartloader.profile.ui.ProfileViewController"
+           styleClass="feature-view">
+    <Label fx:id="messageLabel" styleClass="feature-message" text="…" />
+</StackPane>

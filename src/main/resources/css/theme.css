@@ -1,0 +1,255 @@
+/*
+ * SmartLoader — single centralized theme.
+ * All colors are defined here as looked-up color variables on .root.
+ * FXML files reference styleClass only — never hardcode colors in FXML.
+ */
+
+.root {
+    -navy-dark: #1b2233;       /* sidebar + metric card background */
+    -navy-darker: #141a28;     /* sidebar footer / accents */
+    -gertec-yellow: #ffc20e;   /* active item, primary button, highlights */
+    -content-bg: #f4f6f9;      /* light content area */
+    -text-secondary: #8a93a6;  /* secondary text (grey) */
+    -text-on-dark: #e6e9f0;
+    -panel-bg: #ffffff;
+    -border-soft: #e2e6ee;
+
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ===================== Shell ===================== */
+
+.root-pane {
+    -fx-background-color: -content-bg;
+}
+
+/* ----- Sidebar ----- */
+.sidebar {
+    -fx-background-color: -navy-dark;
+    -fx-padding: 18 14 14 14;
+    -fx-spacing: 4;
+}
+
+.brand {
+    -fx-spacing: 2;
+    -fx-padding: 0 0 14 6;
+}
+
+.brand-title {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.brand-status {
+    -fx-spacing: 6;
+}
+
+.brand-subtitle {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 11px;
+}
+
+.section-title {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 14 0 4 6;
+}
+
+/* Navigation items */
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: -text-on-dark;
+    -fx-font-size: 13px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 9 12 9 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.nav-item:hover {
+    -fx-background-color: -navy-darker;
+}
+
+/* Active item: yellow highlight band */
+.nav-item.active {
+    -fx-background-color: -gertec-yellow;
+    -fx-text-fill: -navy-dark;
+    -fx-font-weight: bold;
+}
+
+/* Status footer (sidebar bottom) */
+.status-footer {
+    -fx-spacing: 8;
+    -fx-padding: 12 6 4 6;
+    -fx-border-color: -navy-darker transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.status-row {
+    -fx-spacing: 8;
+}
+
+.status-label {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 11px;
+}
+
+/* Status dots */
+.status-dot {
+    -fx-min-width: 9;
+    -fx-pref-width: 9;
+    -fx-max-width: 9;
+    -fx-min-height: 9;
+    -fx-pref-height: 9;
+    -fx-max-height: 9;
+    -fx-background-radius: 5;
+    -fx-background-color: -text-secondary;
+}
+
+.status-online {
+    -fx-background-color: #36c275;
+}
+
+.status-unknown {
+    -fx-background-color: -text-secondary;
+}
+
+/* ----- Topbar ----- */
+.topbar {
+    -fx-background-color: white;
+    -fx-min-height: 64;
+    -fx-pref-height: 64;
+    -fx-spacing: 12;
+    -fx-border-color: transparent transparent -border-soft transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.breadcrumb {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 12px;
+}
+
+.logo-placeholder {
+    -fx-text-fill: -navy-dark;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.topbar-actions {
+    -fx-spacing: 10;
+}
+
+/* Buttons */
+.button.primary {
+    -fx-background-color: -gertec-yellow;
+    -fx-text-fill: -navy-dark;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+.button.primary:hover {
+    -fx-background-color: derive(-gertec-yellow, -8%);
+}
+
+.button.secondary {
+    -fx-background-color: -content-bg;
+    -fx-text-fill: -navy-dark;
+    -fx-background-radius: 6;
+    -fx-border-color: -border-soft;
+    -fx-border-radius: 6;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+.button.secondary:hover {
+    -fx-background-color: derive(-content-bg, -4%);
+}
+
+/* ===================== Content ===================== */
+
+.content-area {
+    -fx-background-color: -content-bg;
+}
+
+/* Feature proof-of-wiring views */
+.feature-view {
+    -fx-background-color: -content-bg;
+    -fx-alignment: CENTER;
+}
+
+.feature-message {
+    -fx-text-fill: -navy-dark;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+/* ===================== Dashboard ===================== */
+
+.dashboard-scroll {
+    -fx-background-color: -content-bg;
+    -fx-background: -content-bg;
+}
+
+.dashboard {
+    -fx-spacing: 20;
+}
+
+.page-title {
+    -fx-text-fill: -navy-dark;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.metric-row {
+    -fx-padding: 4 0 0 0;
+}
+
+.metric-card {
+    -fx-background-color: -navy-dark;
+    -fx-background-radius: 10;
+    -fx-padding: 18;
+    -fx-spacing: 8;
+    -fx-min-width: 200;
+    -fx-pref-width: 240;
+}
+
+.metric-caption {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 12px;
+}
+
+.metric-value {
+    -fx-text-fill: white;
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+}
+
+.panel-row {
+    -fx-padding: 4 0 0 0;
+}
+
+.panel {
+    -fx-background-color: -panel-bg;
+    -fx-background-radius: 10;
+    -fx-border-color: -border-soft;
+    -fx-border-radius: 10;
+    -fx-padding: 18;
+    -fx-spacing: 12;
+    -fx-min-height: 200;
+}
+
+.panel-title {
+    -fx-text-fill: -navy-dark;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.panel-empty {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}

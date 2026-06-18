@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
+
+<!--
+    Catalog (Smart Database) feature view.
+    Honest proof-of-wiring placeholder: the label text is set by CatalogViewController
+    from the injected ModuleInfoUseCase. Colors come from theme.css via styleClass only.
+-->
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.gertec.smartloader.catalog.ui.CatalogViewController"
+           styleClass="feature-view">
+    <Label fx:id="messageLabel" styleClass="feature-message" text="…" />
+</StackPane>

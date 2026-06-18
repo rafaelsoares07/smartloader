@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+    Installer view. Increment 0: simple placeholder. Styling via theme.css.
+-->
+<VBox styleClass="feature-view, installer-view"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.gertec.smartloader.app.InstallerController">
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+    <Label text="Instalador" styleClass="page-title"/>
+    <Label text="Em breve — placeholder do Incremento 0." styleClass="panel-empty"/>
+</VBox>
