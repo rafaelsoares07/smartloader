@@ -9,18 +9,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
-/**
- * Enforces the Clean Architecture rules now that everything lives in a SINGLE Maven module.
- *
- * <p>With one module there is no classpath barrier between layers or features, so the
- * compiler no longer protects the boundaries — ArchUnit does:</p>
- * <ul>
- *   <li>domain and application stay framework-free (no Spring, no JavaFX);</li>
- *   <li>inside each feature the arrows point inward (ui/infrastructure -> application -> domain);</li>
- *   <li>between features the dependencies are acyclic: recording -> profile -> catalog -> shared,
- *       never the other way around, and no feature depends on {@code app}.</li>
- * </ul>
- */
 class ArchitectureTest {
 
     private static final String ROOT = "com.gertec.smartloader";
@@ -29,7 +17,6 @@ class ArchitectureTest {
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
             .importPackages(ROOT);
 
-    // ===================== Layer purity (all features) =====================
 
     @Test
     void domainMustNotDependOnFrameworks() {
@@ -47,21 +34,20 @@ class ArchitectureTest {
                 .check(classes);
     }
 
-    // ===================== Layer direction (per feature) =====================
 
     @Test
     void catalogLayersMustPointInward() {
-        assertInwardLayers(ROOT + ".catalog");
+        assertInwardLayers(ROOT + ".smartdatabase");
     }
 
     @Test
     void profileLayersMustPointInward() {
-        assertInwardLayers(ROOT + ".profile");
+        assertInwardLayers(ROOT + ".smartpackage");
     }
 
     @Test
     void recordingLayersMustPointInward() {
-        assertInwardLayers(ROOT + ".recording");
+        assertInwardLayers(ROOT + ".smarthub");
     }
 
     private void assertInwardLayers(String featureBase) {
@@ -77,7 +63,6 @@ class ArchitectureTest {
                 .check(classes);
     }
 
-    // ===================== Feature dependency direction (acyclic) =====================
 
     @Test
     void featuresMustBeFreeOfCycles() {
@@ -89,7 +74,7 @@ class ArchitectureTest {
     @Test
     void catalogMustNotDependOnOtherFeaturesOrApp() {
         noClasses()
-                .that().resideInAPackage("..catalog..")
+                .that().resideInAPackage("..smartdatabase..")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         ROOT + ".profile..", ROOT + ".recording..", ROOT + ".app..")
                 .check(classes);
@@ -98,7 +83,7 @@ class ArchitectureTest {
     @Test
     void profileMustNotDependOnRecordingOrApp() {
         noClasses()
-                .that().resideInAPackage("..profile..")
+                .that().resideInAPackage("..smartpackage..")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         ROOT + ".recording..", ROOT + ".app..")
                 .check(classes);
@@ -107,7 +92,7 @@ class ArchitectureTest {
     @Test
     void recordingMustNotDependOnApp() {
         noClasses()
-                .that().resideInAPackage("..recording..")
+                .that().resideInAPackage("..smarthub..")
                 .should().dependOnClassesThat().resideInAPackage(ROOT + ".app..")
                 .check(classes);
     }
