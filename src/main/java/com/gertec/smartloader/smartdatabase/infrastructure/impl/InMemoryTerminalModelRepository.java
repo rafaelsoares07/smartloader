@@ -1,8 +1,6 @@
 package com.gertec.smartloader.smartdatabase.infrastructure.impl;
 
-import com.gertec.smartloader.smartdatabase.domain.entity.Apk;
 import com.gertec.smartloader.smartdatabase.domain.entity.TerminalModel;
-import com.gertec.smartloader.smartdatabase.domain.repository.ApkRepository;
 import com.gertec.smartloader.smartdatabase.domain.repository.TerminalModelRepository;
 
 import java.util.ArrayList;

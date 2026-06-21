@@ -14,6 +14,44 @@
     -panel-bg: #ffffff;
     -border-soft: #e2e6ee;
 
+    /* Destructive action (light red) */
+    -danger-soft: #fdecec;
+    -danger-border: #f3c2c2;
+    -danger-text: #c0392b;
+
+    /* Badge palette (Tipo / Status) */
+    -badge-gertec-bg: #ede7fb;
+    -badge-gertec-text: #6c3fd1;
+    -badge-cliente-bg: #e3effd;
+    -badge-cliente-text: #2563c9;
+    -badge-ativo-bg: #e3f7ec;
+    -badge-ativo-text: #1f9d57;
+    -badge-pendente-bg: #fff4d6;
+    -badge-pendente-text: #b07d12;
+    -badge-inativo-bg: #e6e8ee;
+    -badge-inativo-text: #5b6475;
+
+    /* Signing profile badges (Tipo de assinatura) */
+    -badge-debug-bg: #e6eef7;
+    -badge-debug-text: #4b6584;
+    -badge-release-bg: #e3f7ec;
+    -badge-release-text: #1f9d57;
+
+    /* Signing profile badges (Status da assinatura) */
+    -badge-active-bg: #e3f7ec;
+    -badge-active-text: #1f9d57;
+    -badge-inactive-bg: #dfe3ea;
+    -badge-inactive-text: #465061;
+    -badge-pending-bg: #fff4d6;
+    -badge-pending-text: #b07d12;
+    -badge-invalid-bg: #fdecec;
+    -badge-invalid-text: #c0392b;
+
+    /* Warning action (e.g. VALIDAR CHAVE) */
+    -warning-soft: #fff4d6;
+    -warning-border: #f0d693;
+    -warning-text: #8a6206;
+
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -169,6 +207,38 @@
     -fx-background-color: derive(-content-bg, -4%);
 }
 
+/* Destructive button (e.g. EXCLUIR) — light red. */
+.button.danger {
+    -fx-background-color: -danger-soft;
+    -fx-text-fill: -danger-text;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-border-color: -danger-border;
+    -fx-border-radius: 6;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+.button.danger:hover {
+    -fx-background-color: derive(-danger-soft, -5%);
+}
+
+/* Warning button (e.g. VALIDAR CHAVE) — amber. */
+.button.warning {
+    -fx-background-color: -warning-soft;
+    -fx-text-fill: -warning-text;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-border-color: -warning-border;
+    -fx-border-radius: 6;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+.button.warning:hover {
+    -fx-background-color: derive(-warning-soft, -5%);
+}
+
 /* ===================== Content ===================== */
 
 .content-area {
@@ -252,4 +322,188 @@
     -fx-text-fill: -text-secondary;
     -fx-font-size: 12px;
     -fx-font-style: italic;
+}
+
+/* ===================== Smart Database (Repositórios) ===================== */
+
+.catalog-scroll {
+    -fx-background-color: -content-bg;
+    -fx-background: -content-bg;
+}
+
+.catalog-root {
+    -fx-background-color: -content-bg;
+}
+
+/* White rounded card */
+.repo-card {
+    -fx-background-color: -panel-bg;
+    -fx-background-radius: 12;
+    -fx-border-color: -border-soft;
+    -fx-border-radius: 12;
+    -fx-padding: 20;
+    -fx-spacing: 16;
+}
+
+.card-title {
+    -fx-text-fill: -navy-dark;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.card-subtitle {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 12px;
+}
+
+/* Small label above a form field */
+.field-label {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.card-header {
+    -fx-padding: 0 0 4 0;
+}
+
+/* Search field + filter combo */
+.search-field {
+    -fx-background-color: -content-bg;
+    -fx-background-radius: 6;
+    -fx-border-color: -border-soft;
+    -fx-border-radius: 6;
+    -fx-padding: 8 12 8 12;
+    -fx-prompt-text-fill: -text-secondary;
+}
+
+.search-field:focused {
+    -fx-border-color: -gertec-yellow;
+}
+
+.filter-combo {
+    -fx-background-color: -content-bg;
+    -fx-background-radius: 6;
+    -fx-border-color: -border-soft;
+    -fx-border-radius: 6;
+}
+
+/* Tables */
+.data-table {
+    -fx-background-color: transparent;
+    -fx-border-color: -border-soft;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.data-table .column-header-background {
+    -fx-background-color: -content-bg;
+    -fx-background-radius: 8 8 0 0;
+}
+
+.data-table .column-header,
+.data-table .filler {
+    -fx-background-color: transparent;
+}
+
+.data-table .column-header .label {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.data-table .table-row-cell {
+    -fx-background-color: -panel-bg;
+    -fx-border-color: transparent transparent -border-soft transparent;
+    -fx-cell-size: 42px;
+}
+
+.data-table .table-row-cell:selected {
+    -fx-background-color: derive(-gertec-yellow, 70%);
+}
+
+.data-table .table-cell {
+    -fx-text-fill: -navy-dark;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 10 0 10;
+}
+
+/* Badges (Tipo / Status) */
+.badge {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 10 3 10;
+    -fx-background-radius: 10;
+}
+
+.badge-gertec {
+    -fx-background-color: -badge-gertec-bg;
+    -fx-text-fill: -badge-gertec-text;
+}
+
+.badge-cliente {
+    -fx-background-color: -badge-cliente-bg;
+    -fx-text-fill: -badge-cliente-text;
+}
+
+.badge-ativo {
+    -fx-background-color: -badge-ativo-bg;
+    -fx-text-fill: -badge-ativo-text;
+}
+
+.badge-pendente {
+    -fx-background-color: -badge-pendente-bg;
+    -fx-text-fill: -badge-pendente-text;
+}
+
+.badge-inativo {
+    -fx-background-color: -badge-inativo-bg;
+    -fx-text-fill: -badge-inativo-text;
+}
+
+/* Signing profile badges (Tipo) */
+.badge-debug {
+    -fx-background-color: -badge-debug-bg;
+    -fx-text-fill: -badge-debug-text;
+}
+
+.badge-release {
+    -fx-background-color: -badge-release-bg;
+    -fx-text-fill: -badge-release-text;
+}
+
+/* Signing profile badges (Status) */
+.badge-active {
+    -fx-background-color: -badge-active-bg;
+    -fx-text-fill: -badge-active-text;
+}
+
+.badge-inactive {
+    -fx-background-color: -badge-inactive-bg;
+    -fx-text-fill: -badge-inactive-text;
+}
+
+.badge-pending {
+    -fx-background-color: -badge-pending-bg;
+    -fx-text-fill: -badge-pending-text;
+}
+
+.badge-invalid {
+    -fx-background-color: -badge-invalid-bg;
+    -fx-text-fill: -badge-invalid-text;
+}
+
+/* "VER" action link button inside table rows */
+.action-link {
+    -fx-background-color: transparent;
+    -fx-text-fill: -badge-cliente-text;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+}
+
+.action-link:hover {
+    -fx-underline: true;
 }

@@ -4,6 +4,7 @@ import com.gertec.smartloader.smartdatabase.application.CreateApkUseCase;
 import com.gertec.smartloader.smartdatabase.application.ListApksUseCase;
 import com.gertec.smartloader.smartdatabase.application.ModuleInfoUseCase;
 import com.gertec.smartloader.smartdatabase.application.RemoveApkUseCase;
+import com.gertec.smartloader.smartdatabase.application.UpdateApkUseCase;
 import com.gertec.smartloader.smartdatabase.domain.ModuleInfo;
 import com.gertec.smartloader.smartdatabase.domain.repository.ApkRepository;
 import com.gertec.smartloader.smartdatabase.infrastructure.impl.InMemoryApkRepository;
@@ -42,5 +43,10 @@ public class CatalogConfiguration {
     @Bean
     public RemoveApkUseCase removeApkUseCase(ApkRepository apkRepository) {
         return new RemoveApkUseCase(apkRepository);
+    }
+
+    @Bean
+    public UpdateApkUseCase updateApkUseCase(ApkRepository apkRepository) {
+        return new UpdateApkUseCase(apkRepository);
     }
 }
