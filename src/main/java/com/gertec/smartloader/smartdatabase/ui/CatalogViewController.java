@@ -1,20 +1,26 @@
 package com.gertec.smartloader.smartdatabase.ui;
 
+import com.gertec.smartloader.smartdatabase.application.AssignSignatureToOdmUseCase;
 import com.gertec.smartloader.smartdatabase.application.CreateApkUseCase;
+import com.gertec.smartloader.smartdatabase.application.CreateOdmUseCase;
 import com.gertec.smartloader.smartdatabase.application.CreateSigningProfileUseCase;
 import com.gertec.smartloader.smartdatabase.application.CreateTerminalUseCase;
 import com.gertec.smartloader.smartdatabase.application.KeystoreValidator;
 import com.gertec.smartloader.smartdatabase.application.ListApksUseCase;
+import com.gertec.smartloader.smartdatabase.application.ListOdmUseCase;
 import com.gertec.smartloader.smartdatabase.application.ListSigningProfilesUseCase;
 import com.gertec.smartloader.smartdatabase.application.ListTerminalUseCase;
 import com.gertec.smartloader.smartdatabase.application.RemoveApkUseCase;
+import com.gertec.smartloader.smartdatabase.application.RemoveOdmUseCase;
 import com.gertec.smartloader.smartdatabase.application.RemoveSigningProfileUseCase;
 import com.gertec.smartloader.smartdatabase.application.RemoveTerminalUseCase;
 import com.gertec.smartloader.smartdatabase.application.UpdateApkUseCase;
+import com.gertec.smartloader.smartdatabase.application.UpdateOdmUseCase;
 import com.gertec.smartloader.smartdatabase.application.UpdateSigningProfileUseCase;
 import com.gertec.smartloader.smartdatabase.application.UpdateTerminalUseCase;
 import com.gertec.smartloader.smartdatabase.application.ValidateSigningProfileUseCase;
 import com.gertec.smartloader.smartdatabase.domain.entity.Apk;
+import com.gertec.smartloader.smartdatabase.domain.entity.Odm;
 import com.gertec.smartloader.smartdatabase.domain.entity.SigningProfile;
 import com.gertec.smartloader.smartdatabase.domain.entity.TerminalModel;
 import com.gertec.smartloader.smartdatabase.domain.enums.ApkStatus;
@@ -83,6 +89,13 @@ public class CatalogViewController {
     private final RemoveSigningProfileUseCase removeSigningProfile;
     private final ValidateSigningProfileUseCase validateSigningProfile;
 
+    // --- ODM use cases ---
+    private final CreateOdmUseCase createOdm;
+    private final ListOdmUseCase listOdms;
+    private final UpdateOdmUseCase updateOdm;
+    private final RemoveOdmUseCase removeOdm;
+    private final AssignSignatureToOdmUseCase assignSignatureToOdm;
+
     // --- APK widgets ---
     @FXML private TextField apkSearchField;
     @FXML private ComboBox<String> apkTypeFilter;
@@ -97,11 +110,24 @@ public class CatalogViewController {
     // --- Terminal widgets ---
     @FXML private TextField terminalNameField;
     @FXML private ComboBox<TerminalType> terminalTypeCombo;
+    @FXML private ComboBox<Odm> terminalOdmCombo;
     @FXML private TextField terminalSearchField;
     @FXML private TableView<TerminalModel> terminalTable;
     @FXML private TableColumn<TerminalModel, String> terminalNameColumn;
     @FXML private TableColumn<TerminalModel, TerminalType> terminalTypeColumn;
+    @FXML private TableColumn<TerminalModel, String> terminalOdmColumn;
     @FXML private TableColumn<TerminalModel, Void> terminalActionColumn;
+
+    // --- ODM widgets ---
+    @FXML private TextField odmNameField;
+    @FXML private TextField odmSearchField;
+    @FXML private TableView<Odm> odmTable;
+    @FXML private TableColumn<Odm, String> odmNameColumn;
+    @FXML private TableColumn<Odm, String> odmSignatureColumn;
+    @FXML private TableColumn<Odm, Void> odmActionColumn;
+
+    // Vínculo assinatura → ODM (1:1): feito no próprio card de Assinaturas.
+    @FXML private ComboBox<Odm> signingOdmCombo;
 
     // --- Signing profile widgets ---
     @FXML private TextField signingNameField;
@@ -128,6 +154,7 @@ public class CatalogViewController {
     private final ObservableList<Apk> apkMaster = FXCollections.observableArrayList();
     private final ObservableList<TerminalModel> terminalMaster = FXCollections.observableArrayList();
     private final ObservableList<SigningProfile> signingMaster = FXCollections.observableArrayList();
+    private final ObservableList<Odm> odmMaster = FXCollections.observableArrayList();
 
     public CatalogViewController(CreateApkUseCase createApk,
                                  ListApksUseCase listApks,
@@ -141,7 +168,12 @@ public class CatalogViewController {
                                  ListSigningProfilesUseCase listSigningProfiles,
                                  UpdateSigningProfileUseCase updateSigningProfile,
                                  RemoveSigningProfileUseCase removeSigningProfile,
-                                 ValidateSigningProfileUseCase validateSigningProfile) {
+                                 ValidateSigningProfileUseCase validateSigningProfile,
+                                 CreateOdmUseCase createOdm,
+                                 ListOdmUseCase listOdms,
+                                 UpdateOdmUseCase updateOdm,
+                                 RemoveOdmUseCase removeOdm,
+                                 AssignSignatureToOdmUseCase assignSignatureToOdm) {
         this.createApk = createApk;
         this.listApks = listApks;
         this.removeApk = removeApk;
@@ -155,16 +187,25 @@ public class CatalogViewController {
         this.updateSigningProfile = updateSigningProfile;
         this.removeSigningProfile = removeSigningProfile;
         this.validateSigningProfile = validateSigningProfile;
+        this.createOdm = createOdm;
+        this.listOdms = listOdms;
+        this.updateOdm = updateOdm;
+        this.removeOdm = removeOdm;
+        this.assignSignatureToOdm = assignSignatureToOdm;
     }
 
     @FXML
     private void initialize() {
         configureApkTable();
-        configureTerminalTable();
         configureSigningTable();
+        configureOdmTable();
+        configureTerminalTable();
         refreshApks();
-        refreshTerminals();
+        // Ordem importa para os combos de dependência: assinaturas alimentam as ODMs,
+        // e as ODMs alimentam o seletor do terminal.
         refreshSigningProfiles();
+        refreshOdms();
+        refreshTerminals();
     }
 
     // ===================== APK section =====================
@@ -274,6 +315,8 @@ public class CatalogViewController {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Selecionar APK");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Arquivos APK", "*.apk"));
+        // Abre numa pasta navegável (home) — evita o diálogo cair num diretório inválido/vazio.
+        chooser.setInitialDirectory(existingDirOrHome(null));
 
         File file = chooser.showOpenDialog(apkTable.getScene().getWindow());
 
@@ -401,8 +444,13 @@ public class CatalogViewController {
     private void configureTerminalTable() {
         terminalTypeCombo.setItems(FXCollections.observableArrayList(TerminalType.values()));
 
+        // O seletor de ODM é alimentado pela lista de ODMs cadastradas (dependência do terminal).
+        terminalOdmCombo.setItems(odmMaster);
+        setComboDisplay(terminalOdmCombo, Odm::name);
+
         terminalNameColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().terminalName()));
         terminalTypeColumn.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().terminalType()));
+        terminalOdmColumn.setCellValueFactory(c -> new SimpleStringProperty(odmNameFor(c.getValue().odmId())));
         terminalActionColumn.setCellFactory(col -> actionCell(this::showTerminalDetails));
 
         FilteredList<TerminalModel> filtered = new FilteredList<>(terminalMaster, t -> true);
@@ -415,6 +463,7 @@ public class CatalogViewController {
             if (selected != null) {
                 terminalNameField.setText(selected.terminalName());
                 terminalTypeCombo.setValue(selected.terminalType());
+                terminalOdmCombo.setValue(findOdmById(selected.odmId()));
             }
         });
     }
@@ -429,8 +478,13 @@ public class CatalogViewController {
     @FXML
     private void onAddTerminal() {
         try {
+            Odm odm = terminalOdmCombo.getValue();
+            if (odm == null) {
+                showError("Selecione a ODM à qual o terminal pertence.");
+                return;
+            }
             createTerminal.execute(new CreateTerminalUseCase.Input(
-                    terminalNameField.getText(), terminalTypeCombo.getValue()));
+                    terminalNameField.getText(), terminalTypeCombo.getValue(), odm.id()));
             clearTerminalForm();
             refreshTerminals();
         } catch (IllegalArgumentException e) {
@@ -446,8 +500,13 @@ public class CatalogViewController {
             return;
         }
         try {
+            Odm odm = terminalOdmCombo.getValue();
+            if (odm == null) {
+                showError("Selecione a ODM à qual o terminal pertence.");
+                return;
+            }
             updateTerminal.execute(new UpdateTerminalUseCase.Input(
-                    selected.id(), terminalNameField.getText(), terminalTypeCombo.getValue()));
+                    selected.id(), terminalNameField.getText(), terminalTypeCombo.getValue(), odm.id()));
             clearTerminalForm();
             refreshTerminals();
         } catch (IllegalArgumentException e) {
@@ -474,14 +533,22 @@ public class CatalogViewController {
     private void clearTerminalForm() {
         terminalNameField.clear();
         terminalTypeCombo.getSelectionModel().clearSelection();
+        terminalOdmCombo.getSelectionModel().clearSelection();
         terminalTable.getSelectionModel().clearSelection();
     }
 
     private void showTerminalDetails(TerminalModel terminal) {
+        Odm odm = findOdmById(terminal.odmId());
+        String odmName = odm != null ? odm.name() : "—";
+        String signatureName = odm != null ? signatureNameFor(odm.signatureId()) : "—";
+
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Detalhes do terminal");
         alert.setHeaderText(terminal.terminalName());
-        alert.setContentText("Tipo: " + terminal.terminalType());
+        alert.setContentText(
+                "Tipo: " + terminal.terminalType() + "\n"
+                        + "ODM: " + odmName + "\n"
+                        + "Assinatura (via ODM): " + signatureName);
         alert.showAndWait();
     }
 
@@ -490,6 +557,10 @@ public class CatalogViewController {
     private void configureSigningTable() {
         signingTypeCombo.setItems(FXCollections.observableArrayList(SigningProfileType.values()));
         signingStatusCombo.setItems(FXCollections.observableArrayList(SigningProfileStatus.values()));
+
+        // Combo de vínculo: a assinatura pode ser ligada (1:1) a uma ODM já cadastrada.
+        signingOdmCombo.setItems(odmMaster);
+        setComboDisplay(signingOdmCombo, Odm::name);
 
         signingNameColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().name()));
         signingAliasColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().keyAlias()));
@@ -551,6 +622,9 @@ public class CatalogViewController {
         chooser.setTitle("Selecionar keystore");
         chooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Keystore Android", "*.jks", "*.keystore"));
+        // Reabre na pasta do keystore já escolhido (se houver); senão, na home.
+        File current = selectedKeystorePath != null ? new File(selectedKeystorePath).getParentFile() : null;
+        chooser.setInitialDirectory(existingDirOrHome(current));
 
         File file = chooser.showOpenDialog(signingTable.getScene().getWindow());
         if (file == null) {
@@ -569,11 +643,12 @@ public class CatalogViewController {
     @FXML
     private void onAddSigningProfile() {
         try {
-            createSigningProfile.execute(new CreateSigningProfileUseCase.Input(
+            SigningProfile created = createSigningProfile.execute(new CreateSigningProfileUseCase.Input(
                     signingNameField.getText(), selectedKeystorePath, signingAliasField.getText(),
                     keystorePasswordField.getText(), keyPasswordField.getText(),
                     signingTypeCombo.getValue(), signingStatusCombo.getValue(),
                     signingNoteField.getText()));
+            linkSignatureToSelectedOdm(created);
             clearSigningProfileForm();
             refreshSigningProfiles();
         } catch (IllegalArgumentException e) {
@@ -596,11 +671,23 @@ public class CatalogViewController {
                     keystorePasswordField.getText(), keyPasswordField.getText(),
                     signingTypeCombo.getValue(), signingStatusCombo.getValue(),
                     signingNoteField.getText()));
+            linkSignatureToSelectedOdm(selected);
             clearSigningProfileForm();
             refreshSigningProfiles();
         } catch (IllegalArgumentException e) {
             showError(e.getMessage());
         }
+    }
+
+    // Liga (1:1) a assinatura à ODM escolhida no combo, se houver. Não é obrigatório vincular.
+    private void linkSignatureToSelectedOdm(SigningProfile signature) {
+        Odm odm = signingOdmCombo.getValue();
+        if (odm == null) {
+            return;
+        }
+        assignSignatureToOdm.execute(new AssignSignatureToOdmUseCase.Input(odm.id(), signature.id()));
+        refreshOdms();
+        refreshTerminals();
     }
 
     @FXML
@@ -627,6 +714,7 @@ public class CatalogViewController {
         signingNoteField.clear();
         signingTypeCombo.getSelectionModel().clearSelection();
         signingStatusCombo.getSelectionModel().clearSelection();
+        signingOdmCombo.getSelectionModel().clearSelection();
         keystoreFileLabel.setText("Nenhum arquivo selecionado");
         selectedKeystorePath = null;
         signingTable.getSelectionModel().clearSelection();
@@ -638,6 +726,8 @@ public class CatalogViewController {
         signingTypeCombo.setValue(profile.type());
         signingStatusCombo.setValue(profile.status());
         signingNoteField.setText(profile.note());
+        // Pré-seleciona a ODM que usa esta assinatura (se alguma), para edição do vínculo.
+        signingOdmCombo.setValue(findOdmBySignatureId(profile.id()));
         keystoreFileLabel.setText(profile.keystoreFileName());
         selectedKeystorePath = profile.keystorePath();
         // Senhas ficam mascaradas no PasswordField (nunca em texto puro na tela).
@@ -691,6 +781,117 @@ public class CatalogViewController {
         dialog.showAndWait();
     }
 
+    // ===================== ODM section =====================
+
+    private void configureOdmTable() {
+        odmNameColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().name()));
+        odmSignatureColumn.setCellValueFactory(c -> new SimpleStringProperty(signatureNameFor(c.getValue().signatureId())));
+        odmActionColumn.setCellFactory(col -> actionCell(this::showOdmDetails));
+
+        FilteredList<Odm> filtered = new FilteredList<>(odmMaster, o -> true);
+        odmSearchField.textProperty().addListener((o, old, val) -> filtered.setPredicate(odmPredicate()));
+        odmTable.setItems(filtered);
+
+        // Selecionar uma linha popula o nome no formulário, facilitando a edição.
+        odmTable.getSelectionModel().selectedItemProperty().addListener((o, old, selected) -> {
+            if (selected != null) {
+                odmNameField.setText(selected.name());
+            }
+        });
+    }
+
+    private java.util.function.Predicate<Odm> odmPredicate() {
+        String search = safeLower(odmSearchField.getText());
+        return odm -> search.isBlank()
+                || safeLower(odm.name()).contains(search)
+                || safeLower(signatureNameFor(odm.signatureId())).contains(search);
+    }
+
+    @FXML
+    private void onAddOdm() {
+        try {
+            // A ODM nasce só com o nome; a assinatura é vinculada no card de Assinaturas.
+            createOdm.execute(new CreateOdmUseCase.Input(odmNameField.getText()));
+            clearOdmForm();
+            refreshOdms();
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onEditOdm() {
+        Odm selected = odmTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showError("Selecione uma ODM na tabela.");
+            return;
+        }
+        try {
+            updateOdm.execute(new UpdateOdmUseCase.Input(selected.id(), odmNameField.getText()));
+            clearOdmForm();
+            refreshOdms();
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onRemoveOdm() {
+        Odm selected = odmTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showError("Selecione uma ODM na tabela.");
+            return;
+        }
+        removeOdm.execute(selected.id());
+        clearOdmForm();
+        refreshOdms();
+    }
+
+    private void refreshOdms() {
+        odmMaster.setAll(listOdms.execute());
+    }
+
+    private void clearOdmForm() {
+        odmNameField.clear();
+        odmTable.getSelectionModel().clearSelection();
+    }
+
+    private void showOdmDetails(Odm odm) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Detalhes da ODM");
+        alert.setHeaderText(odm.name());
+        alert.setContentText("Assinatura vinculada: " + signatureNameFor(odm.signatureId()));
+        alert.showAndWait();
+    }
+
+    // Resolve o nome da assinatura a partir do id guardado na ODM (ou "—" quando não há vínculo).
+    private String signatureNameFor(String signatureId) {
+        SigningProfile profile = findSigningProfileById(signatureId);
+        return profile != null ? profile.name() : "—";
+    }
+
+    private SigningProfile findSigningProfileById(String id) {
+        if (id == null || id.isBlank()) return null;
+        return signingMaster.stream().filter(p -> p.id().equals(id)).findFirst().orElse(null);
+    }
+
+    private Odm findOdmById(String id) {
+        if (id == null || id.isBlank()) return null;
+        return odmMaster.stream().filter(o -> o.id().equals(id)).findFirst().orElse(null);
+    }
+
+    // Encontra a ODM que usa uma dada assinatura (vínculo 1:1), para pré-selecionar na edição.
+    private Odm findOdmBySignatureId(String signatureId) {
+        if (signatureId == null || signatureId.isBlank()) return null;
+        return odmMaster.stream().filter(o -> signatureId.equals(o.signatureId())).findFirst().orElse(null);
+    }
+
+    // Resolve o nome da ODM a partir do id guardado no terminal (ou "—" quando não encontrada).
+    private String odmNameFor(String odmId) {
+        Odm odm = findOdmById(odmId);
+        return odm != null ? odm.name() : "—";
+    }
+
     // ===================== Shared cell helpers =====================
 
     /** Renders an enum value as a coloured badge; {@code styleResolver} picks the styleClass. */
@@ -731,6 +932,22 @@ public class CatalogViewController {
 
     private static String safeLower(String value) {
         return value == null ? "" : value.toLowerCase().trim();
+    }
+
+    /** Devolve um diretório navegável para o FileChooser: o candidato se existir, senão a home. */
+    private static File existingDirOrHome(File candidate) {
+        if (candidate != null && candidate.isDirectory()) {
+            return candidate;
+        }
+        return new File(System.getProperty("user.home"));
+    }
+
+    /** Exibe entidades no ComboBox pelo texto escolhido (ex.: nome), preservando o objeto como valor. */
+    private <T> void setComboDisplay(ComboBox<T> combo, java.util.function.Function<T, String> toText) {
+        combo.setConverter(new javafx.util.StringConverter<>() {
+            @Override public String toString(T item) { return item == null ? "" : toText.apply(item); }
+            @Override public T fromString(String text) { return null; }
+        });
     }
 
     private void showError(String message) {

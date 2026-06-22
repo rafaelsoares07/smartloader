@@ -4,6 +4,7 @@ import com.gertec.smartloader.smartdatabase.application.CreateTerminalUseCase;
 import com.gertec.smartloader.smartdatabase.application.ListTerminalUseCase;
 import com.gertec.smartloader.smartdatabase.application.RemoveTerminalUseCase;
 import com.gertec.smartloader.smartdatabase.application.UpdateTerminalUseCase;
+import com.gertec.smartloader.smartdatabase.domain.repository.OdmRepository;
 import com.gertec.smartloader.smartdatabase.domain.repository.TerminalModelRepository;
 import com.gertec.smartloader.smartdatabase.infrastructure.impl.InMemoryTerminalModelRepository;
 import org.springframework.context.annotation.Bean;
@@ -19,8 +20,9 @@ public class TerminalModelConfiguration {
     }
 
     @Bean
-    public CreateTerminalUseCase createTerminalUseCase(TerminalModelRepository terminalModelRepository) {
-        return new CreateTerminalUseCase(terminalModelRepository);
+    public CreateTerminalUseCase createTerminalUseCase(TerminalModelRepository terminalModelRepository,
+                                                       OdmRepository odmRepository) {
+        return new CreateTerminalUseCase(terminalModelRepository, odmRepository);
     }
 
     @Bean
