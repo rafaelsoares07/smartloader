@@ -29,6 +29,7 @@ import com.gertec.smartloader.smartdatabase.domain.enums.SigningProfileStatus;
 import com.gertec.smartloader.smartdatabase.domain.enums.SigningProfileType;
 import com.gertec.smartloader.smartdatabase.domain.enums.TerminalType;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.collections.FXCollections;
@@ -126,6 +127,11 @@ public class CatalogViewController {
     @FXML private TableColumn<Odm, String> odmSignatureColumn;
     @FXML private TableColumn<Odm, Void> odmActionColumn;
 
+    @FXML private Label apkCountLabel;
+    @FXML private Label terminalCountLabel;
+    @FXML private Label odmCountLabel;
+    @FXML private Label signingCountLabel;
+
     // Vínculo assinatura → ODM (1:1): feito no próprio card de Assinaturas.
     @FXML private ComboBox<Odm> signingOdmCombo;
 
@@ -200,12 +206,20 @@ public class CatalogViewController {
         configureSigningTable();
         configureOdmTable();
         configureTerminalTable();
+        configureSummaryCards();
         refreshApks();
         // Ordem importa para os combos de dependência: assinaturas alimentam as ODMs,
         // e as ODMs alimentam o seletor do terminal.
         refreshSigningProfiles();
         refreshOdms();
         refreshTerminals();
+    }
+
+    private void configureSummaryCards() {
+        apkCountLabel.textProperty().bind(Bindings.size(apkMaster).asString());
+        terminalCountLabel.textProperty().bind(Bindings.size(terminalMaster).asString());
+        odmCountLabel.textProperty().bind(Bindings.size(odmMaster).asString());
+        signingCountLabel.textProperty().bind(Bindings.size(signingMaster).asString());
     }
 
     // ===================== APK section =====================
@@ -513,7 +527,6 @@ public class CatalogViewController {
             showError(e.getMessage());
         }
     }
-
     @FXML
     private void onRemoveTerminal() {
         TerminalModel selected = terminalTable.getSelectionModel().getSelectedItem();

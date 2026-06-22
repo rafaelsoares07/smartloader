@@ -367,6 +367,60 @@
     -fx-padding: 0 0 4 0;
 }
 
+/* ---- Collapsible repository sections (TitledPane) ----
+   Cada seção (ODM / Terminais / Assinaturas / APKs) é um card branco único:
+   a barra do título é clicável e o conteúdo aparece só quando expandido. */
+.repo-pane {
+    -fx-background-color: -panel-bg;
+    -fx-background-radius: 12;
+    -fx-border-color: -border-soft;
+    -fx-border-radius: 12;
+}
+
+/* Barra clicável do título */
+.repo-pane > .title {
+    -fx-background-color: transparent;
+    -fx-background-radius: 12 12 0 0;
+    -fx-padding: 14 18 14 18;
+}
+
+.repo-pane > .title > .text {
+    -fx-fill: -navy-dark;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+/* Feedback de "clicável" ao passar o mouse */
+.repo-pane > .title:hover {
+    -fx-background-color: -content-bg;
+}
+
+/* Linha divisória entre título e conteúdo quando aberto */
+.repo-pane:expanded > .title {
+    -fx-border-color: transparent transparent -border-soft transparent;
+}
+
+/* A seta de expandir/recolher acompanha a cor do texto */
+.repo-pane > .title > .arrow-button > .arrow {
+    -fx-background-color: -navy-dark;
+}
+
+/* O conteúdo não tem borda própria: o card é a moldura externa (.repo-pane) */
+.repo-pane > .content {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+/* Dentro da seção, o VBox interno só organiza o conteúdo (sem moldura dupla) */
+.repo-pane .repo-card {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-color: transparent;
+    -fx-border-radius: 0;
+    -fx-padding: 8 18 18 18;
+}
+
 /* Search field + filter combo */
 .search-field {
     -fx-background-color: -content-bg;
@@ -506,4 +560,56 @@
 
 .action-link:hover {
     -fx-underline: true;
+}
+
+.summary-bar {
+    -fx-padding: 8 0 18 0;
+    -fx-alignment: center-left;
+}
+
+.summary-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 18;
+    -fx-border-color: #E6EAF0;
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
+    -fx-padding: 18 22;
+    -fx-spacing: 6;
+    -fx-min-width: 160;
+    -fx-pref-height: 96;
+
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(15, 23, 42, 0.08),
+            18,
+            0.15,
+            0,
+            6
+    );
+}
+
+.summary-card:hover {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #D7DCE5;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(15, 23, 42, 0.14),
+            24,
+            0.18,
+            0,
+            8
+    );
+    -fx-cursor: hand;
+}
+
+.summary-card-title {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+.summary-card-value {
+    -fx-text-fill: #0F172A;
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
 }

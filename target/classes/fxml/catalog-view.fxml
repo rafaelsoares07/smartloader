@@ -9,16 +9,20 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <!--
-    Smart Database view: os cards seguem a ORDEM DE CRIAÇÃO (de cima para baixo):
+    Smart Database view: cada repositório agora é um TitledPane recolhível
+    (seções independentes — abrir uma não fecha as outras). A ORDEM DE CRIAÇÃO
+    (de cima para baixo) é mantida:
         1) Criar ODM
         2) Criar modelos de terminal dessa ODM
         3) Criar assinatura e, no mesmo card, vinculá-la (1:1) à ODM
     O card de APKs é um repositório independente e fica ao final.
+    Os botões de ação ficam no topo do conteúdo: só aparecem com a seção aberta.
     Todas as cores vivem em theme.css (apenas styleClass aqui, nunca cor hardcoded).
     O comportamento é coordenado pelo controller, que só chama use cases.
 -->
@@ -27,224 +31,242 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.gertec.smartloader.smartdatabase.ui.CatalogViewController">
 
-    <VBox styleClass="catalog-root" spacing="20">
+    <VBox styleClass="catalog-root" spacing="14">
         <padding>
             <Insets top="24" right="24" bottom="24" left="24"/>
         </padding>
 
-        <!-- ============ 1) Card: ODMs (criado primeiro) ============ -->
-        <VBox styleClass="repo-card" spacing="16">
 
-            <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
-                <VBox spacing="2">
-                    <Label text="1 · ODMS" styleClass="card-title"/>
+        <HBox spacing="16" styleClass="summary-bar">
+            <VBox styleClass="summary-card">
+                <Label text="APKs" styleClass="summary-card-title"/>
+                <Label fx:id="apkCountLabel" text="0" styleClass="summary-card-value"/>
+            </VBox>
+            <VBox styleClass="summary-card">
+                <Label text="Terminais" styleClass="summary-card-title"/>
+                <Label fx:id="terminalCountLabel" text="0" styleClass="summary-card-value"/>
+            </VBox>
+            <VBox styleClass="summary-card">
+                <Label text="ODMs" styleClass="summary-card-title"/>
+                <Label fx:id="odmCountLabel" text="0" styleClass="summary-card-value"/>
+            </VBox>
+            <VBox styleClass="summary-card">
+                <Label text="Assinaturas" styleClass="summary-card-title"/>
+                <Label fx:id="signingCountLabel" text="0" styleClass="summary-card-value"/>
+            </VBox>
+        </HBox>
+
+
+        <!-- ============ 1) Seção: ODMs (criado primeiro) ============ -->
+        <TitledPane text="1 · ODMS" styleClass="repo-pane" expanded="true" animated="true">
+            <VBox styleClass="repo-card" spacing="16">
+
+                <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
                     <Label text="Comece por aqui: cada ODM agrupa terminais e recebe uma assinatura depois"
                            styleClass="card-subtitle"/>
-                </VBox>
-                <Region HBox.hgrow="ALWAYS"/>
-                <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
-                    <Button text="ADICIONAR ODM" onAction="#onAddOdm" styleClass="button,primary"/>
-                    <Button text="EDITAR" onAction="#onEditOdm" styleClass="button,secondary"/>
-                    <Button text="EXCLUIR" onAction="#onRemoveOdm" styleClass="button,danger"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
+                        <Button text="ADICIONAR ODM" onAction="#onAddOdm" styleClass="button,primary"/>
+                        <Button text="EDITAR" onAction="#onEditOdm" styleClass="button,secondary"/>
+                        <Button text="EXCLUIR" onAction="#onRemoveOdm" styleClass="button,danger"/>
+                    </HBox>
                 </HBox>
-            </HBox>
 
-            <VBox styleClass="form-block" spacing="10">
-                <VBox spacing="4">
-                    <Label text="Nome da ODM" styleClass="field-label"/>
-                    <TextField fx:id="odmNameField" promptText="Nome da ODM" styleClass="search-field"/>
+                <VBox styleClass="form-block" spacing="10">
+                    <VBox spacing="4">
+                        <Label text="Nome da ODM" styleClass="field-label"/>
+                        <TextField fx:id="odmNameField" promptText="Nome da ODM" styleClass="search-field"/>
+                    </VBox>
                 </VBox>
+
+                <TextField fx:id="odmSearchField" promptText="Buscar ODM ou assinatura"
+                           styleClass="search-field"/>
+
+                <TableView fx:id="odmTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="odmNameColumn" text="Nome" prefWidth="240"/>
+                        <TableColumn fx:id="odmSignatureColumn" text="Assinatura vinculada" prefWidth="240"/>
+                        <TableColumn fx:id="odmActionColumn" text="Ação" prefWidth="90"/>
+                    </columns>
+                </TableView>
             </VBox>
+        </TitledPane>
 
-            <TextField fx:id="odmSearchField" promptText="Buscar ODM ou assinatura"
-                       styleClass="search-field"/>
+        <!-- ============ 2) Seção: Terminais da ODM ============ -->
+        <TitledPane text="2 · TERMINAIS" styleClass="repo-pane" expanded="false" animated="true">
+            <VBox styleClass="repo-card" spacing="16">
 
-            <TableView fx:id="odmTable" styleClass="data-table" VBox.vgrow="ALWAYS">
-                <columns>
-                    <TableColumn fx:id="odmNameColumn" text="Nome" prefWidth="240"/>
-                    <TableColumn fx:id="odmSignatureColumn" text="Assinatura vinculada" prefWidth="240"/>
-                    <TableColumn fx:id="odmActionColumn" text="Ação" prefWidth="90"/>
-                </columns>
-            </TableView>
-        </VBox>
-
-        <!-- ============ 2) Card: Terminais da ODM ============ -->
-        <VBox styleClass="repo-card" spacing="16">
-
-            <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
-                <VBox spacing="2">
-                    <Label text="2 · TERMINAIS" styleClass="card-title"/>
+                <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
                     <Label text="Cadastre os modelos de terminal escolhendo a ODM à qual pertencem"
                            styleClass="card-subtitle"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
+                        <Button text="ADICIONAR" onAction="#onAddTerminal" styleClass="button,primary"/>
+                        <Button text="EDITAR" onAction="#onEditTerminal" styleClass="button,secondary"/>
+                        <Button text="EXCLUIR" onAction="#onRemoveTerminal" styleClass="button,danger"/>
+                    </HBox>
+                </HBox>
+
+                <VBox styleClass="form-block" spacing="10">
+                    <HBox spacing="10">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Nome do terminal" styleClass="field-label"/>
+                            <TextField fx:id="terminalNameField" promptText="Nome do terminal"
+                                       styleClass="search-field"/>
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Tipo" styleClass="field-label"/>
+                            <ComboBox fx:id="terminalTypeCombo" styleClass="filter-combo" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="ODM" styleClass="field-label"/>
+                            <ComboBox fx:id="terminalOdmCombo" styleClass="filter-combo" maxWidth="Infinity"
+                                      promptText="Selecione a ODM"/>
+                        </VBox>
+                    </HBox>
                 </VBox>
-                <Region HBox.hgrow="ALWAYS"/>
-                <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
-                    <Button text="ADICIONAR" onAction="#onAddTerminal" styleClass="button,primary"/>
-                    <Button text="EDITAR" onAction="#onEditTerminal" styleClass="button,secondary"/>
-                    <Button text="EXCLUIR" onAction="#onRemoveTerminal" styleClass="button,danger"/>
-                </HBox>
-            </HBox>
 
-            <VBox styleClass="form-block" spacing="10">
-                <HBox spacing="10">
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Nome do terminal" styleClass="field-label"/>
-                        <TextField fx:id="terminalNameField" promptText="Nome do terminal"
-                                   styleClass="search-field"/>
-                    </VBox>
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Tipo" styleClass="field-label"/>
-                        <ComboBox fx:id="terminalTypeCombo" styleClass="filter-combo" maxWidth="Infinity"/>
-                    </VBox>
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="ODM" styleClass="field-label"/>
-                        <ComboBox fx:id="terminalOdmCombo" styleClass="filter-combo" maxWidth="Infinity"
-                                  promptText="Selecione a ODM"/>
-                    </VBox>
-                </HBox>
+                <TextField fx:id="terminalSearchField" promptText="Buscar por nome ou tipo"
+                           styleClass="search-field"/>
+
+                <TableView fx:id="terminalTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="terminalNameColumn" text="Nome" prefWidth="200"/>
+                        <TableColumn fx:id="terminalTypeColumn" text="Tipo" prefWidth="140"/>
+                        <TableColumn fx:id="terminalOdmColumn" text="ODM" prefWidth="200"/>
+                        <TableColumn fx:id="terminalActionColumn" text="Ação" prefWidth="90"/>
+                    </columns>
+                </TableView>
             </VBox>
+        </TitledPane>
 
-            <TextField fx:id="terminalSearchField" promptText="Buscar por nome ou tipo"
-                       styleClass="search-field"/>
+        <!-- ============ 3) Seção: Assinaturas ============ -->
+        <TitledPane text="3 · ASSINATURAS" styleClass="repo-pane" expanded="false" animated="true">
+            <VBox styleClass="repo-card" spacing="16">
 
-            <TableView fx:id="terminalTable" styleClass="data-table" VBox.vgrow="ALWAYS">
-                <columns>
-                    <TableColumn fx:id="terminalNameColumn" text="Nome" prefWidth="200"/>
-                    <TableColumn fx:id="terminalTypeColumn" text="Tipo" prefWidth="140"/>
-                    <TableColumn fx:id="terminalOdmColumn" text="ODM" prefWidth="200"/>
-                    <TableColumn fx:id="terminalActionColumn" text="Ação" prefWidth="90"/>
-                </columns>
-            </TableView>
-        </VBox>
-
-        <!-- ============ 3) Card: Assinaturas ============ -->
-        <VBox styleClass="repo-card" spacing="16">
-
-            <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
-                <VBox spacing="2">
-                    <Label text="3 · ASSINATURAS" styleClass="card-title"/>
+                <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
                     <Label text="Cadastre a chave e, opcionalmente, já vincule (1:1) a uma ODM"
                            styleClass="card-subtitle"/>
-                </VBox>
-                <Region HBox.hgrow="ALWAYS"/>
-                <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
-                    <Button text="ADICIONAR ASSINATURA" onAction="#onAddSigningProfile" styleClass="button,primary"/>
-                    <Button text="EDITAR" onAction="#onEditSigningProfile" styleClass="button,secondary"/>
-                    <Button text="EXCLUIR" onAction="#onRemoveSigningProfile" styleClass="button,danger"/>
-                    <Button text="IMPORTAR JKS" onAction="#onImportJks" styleClass="button,secondary"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
+                        <Button text="ADICIONAR ASSINATURA" onAction="#onAddSigningProfile" styleClass="button,primary"/>
+                        <Button text="EDITAR" onAction="#onEditSigningProfile" styleClass="button,secondary"/>
+                        <Button text="EXCLUIR" onAction="#onRemoveSigningProfile" styleClass="button,danger"/>
+                        <Button text="IMPORTAR JKS" onAction="#onImportJks" styleClass="button,secondary"/>
+                    </HBox>
                 </HBox>
-            </HBox>
 
-            <!-- Formulário inline: senhas sempre em PasswordField -->
-            <VBox styleClass="form-block" spacing="10">
-                <HBox spacing="10">
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Nome da assinatura" styleClass="field-label"/>
-                        <TextField fx:id="signingNameField" promptText="Nome da assinatura"
+                <!-- Formulário inline: senhas sempre em PasswordField -->
+                <VBox styleClass="form-block" spacing="10">
+                    <HBox spacing="10">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Nome da assinatura" styleClass="field-label"/>
+                            <TextField fx:id="signingNameField" promptText="Nome da assinatura"
+                                       styleClass="search-field"/>
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Alias da chave" styleClass="field-label"/>
+                            <TextField fx:id="signingAliasField" promptText="Alias da chave"
+                                       styleClass="search-field"/>
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Button text="Escolher arquivo (.jks / .keystore)" onAction="#onChooseKeystoreFile"
+                                styleClass="button,secondary"/>
+                        <Label fx:id="keystoreFileLabel" text="Nenhum arquivo selecionado"
+                               styleClass="card-subtitle" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Senha do keystore" styleClass="field-label"/>
+                            <PasswordField fx:id="keystorePasswordField" promptText="Senha do keystore"
+                                           styleClass="search-field"/>
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Senha da chave" styleClass="field-label"/>
+                            <PasswordField fx:id="keyPasswordField" promptText="Senha da chave"
+                                           styleClass="search-field"/>
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Tipo" styleClass="field-label"/>
+                            <ComboBox fx:id="signingTypeCombo" styleClass="filter-combo" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Status" styleClass="field-label"/>
+                            <ComboBox fx:id="signingStatusCombo" styleClass="filter-combo" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Vincular à ODM (opcional)" styleClass="field-label"/>
+                            <ComboBox fx:id="signingOdmCombo" styleClass="filter-combo" maxWidth="Infinity"
+                                      promptText="Nenhuma (vincular depois)"/>
+                        </VBox>
+                    </HBox>
+
+                    <VBox spacing="4">
+                        <Label text="Observação (opcional)" styleClass="field-label"/>
+                        <TextField fx:id="signingNoteField" promptText="Observação"
                                    styleClass="search-field"/>
                     </VBox>
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Alias da chave" styleClass="field-label"/>
-                        <TextField fx:id="signingAliasField" promptText="Alias da chave"
-                                   styleClass="search-field"/>
-                    </VBox>
-                </HBox>
-
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Button text="Escolher arquivo (.jks / .keystore)" onAction="#onChooseKeystoreFile"
-                            styleClass="button,secondary"/>
-                    <Label fx:id="keystoreFileLabel" text="Nenhum arquivo selecionado"
-                           styleClass="card-subtitle" HBox.hgrow="ALWAYS"/>
-                </HBox>
-
-                <HBox spacing="10">
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Senha do keystore" styleClass="field-label"/>
-                        <PasswordField fx:id="keystorePasswordField" promptText="Senha do keystore"
-                                       styleClass="search-field"/>
-                    </VBox>
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Senha da chave" styleClass="field-label"/>
-                        <PasswordField fx:id="keyPasswordField" promptText="Senha da chave"
-                                       styleClass="search-field"/>
-                    </VBox>
-                </HBox>
-
-                <HBox spacing="10">
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Tipo" styleClass="field-label"/>
-                        <ComboBox fx:id="signingTypeCombo" styleClass="filter-combo" maxWidth="Infinity"/>
-                    </VBox>
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Status" styleClass="field-label"/>
-                        <ComboBox fx:id="signingStatusCombo" styleClass="filter-combo" maxWidth="Infinity"/>
-                    </VBox>
-                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="Vincular à ODM (opcional)" styleClass="field-label"/>
-                        <ComboBox fx:id="signingOdmCombo" styleClass="filter-combo" maxWidth="Infinity"
-                                  promptText="Nenhuma (vincular depois)"/>
-                    </VBox>
-                </HBox>
-
-                <VBox spacing="4">
-                    <Label text="Observação (opcional)" styleClass="field-label"/>
-                    <TextField fx:id="signingNoteField" promptText="Observação"
-                               styleClass="search-field"/>
                 </VBox>
+
+                <HBox styleClass="toolbar" spacing="10" alignment="CENTER_LEFT">
+                    <TextField fx:id="signingSearchField" promptText="Buscar assinatura, alias ou tipo"
+                               styleClass="search-field" HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="signingTypeFilter" styleClass="filter-combo"/>
+                </HBox>
+
+                <TableView fx:id="signingTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="signingNameColumn" text="Nome" prefWidth="200"/>
+                        <TableColumn fx:id="signingAliasColumn" text="Alias" prefWidth="150"/>
+                        <TableColumn fx:id="signingTypeColumn" text="Tipo" prefWidth="110"/>
+                        <TableColumn fx:id="signingFileColumn" text="Arquivo" prefWidth="200"/>
+                        <TableColumn fx:id="signingStatusColumn" text="Status" prefWidth="110"/>
+                        <TableColumn fx:id="signingActionColumn" text="Ação" prefWidth="90"/>
+                    </columns>
+                </TableView>
             </VBox>
+        </TitledPane>
 
-            <HBox styleClass="toolbar" spacing="10" alignment="CENTER_LEFT">
-                <TextField fx:id="signingSearchField" promptText="Buscar assinatura, alias ou tipo"
-                           styleClass="search-field" HBox.hgrow="ALWAYS"/>
-                <ComboBox fx:id="signingTypeFilter" styleClass="filter-combo"/>
-            </HBox>
+        <!-- ============ Seção: Repositório de APKs (independente) ============ -->
+        <TitledPane text="REPOSITÓRIO DE APKS" styleClass="repo-pane" expanded="false" animated="true">
+            <VBox styleClass="repo-card" spacing="16">
 
-            <TableView fx:id="signingTable" styleClass="data-table" VBox.vgrow="ALWAYS">
-                <columns>
-                    <TableColumn fx:id="signingNameColumn" text="Nome" prefWidth="200"/>
-                    <TableColumn fx:id="signingAliasColumn" text="Alias" prefWidth="150"/>
-                    <TableColumn fx:id="signingTypeColumn" text="Tipo" prefWidth="110"/>
-                    <TableColumn fx:id="signingFileColumn" text="Arquivo" prefWidth="200"/>
-                    <TableColumn fx:id="signingStatusColumn" text="Status" prefWidth="110"/>
-                    <TableColumn fx:id="signingActionColumn" text="Ação" prefWidth="90"/>
-                </columns>
-            </TableView>
-        </VBox>
-
-        <!-- ============ Card: Repositório de APKs (independente) ============ -->
-        <VBox styleClass="repo-card" spacing="16">
-
-            <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
-                <VBox spacing="2">
-                    <Label text="REPOSITÓRIO DE APKS" styleClass="card-title"/>
+                <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
                     <Label text="Referências de caminho em nuvem" styleClass="card-subtitle"/>
-                </VBox>
-                <Region HBox.hgrow="ALWAYS"/>
-                <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
-                    <Button text="ADICIONAR APK" onAction="#onAddApk" styleClass="button,primary"/>
-                    <Button text="SUBSTITUIR" onAction="#onReplaceApk" styleClass="button,secondary"/>
-                    <Button text="EDITAR" onAction="#onEditApk" styleClass="button,secondary"/>
-                    <Button text="EXCLUIR" onAction="#onRemoveApk" styleClass="button,danger"/>
-                    <Button text="IMPORTAR" onAction="#onImportApk" styleClass="button,secondary"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
+                        <Button text="ADICIONAR APK" onAction="#onAddApk" styleClass="button,primary"/>
+                        <Button text="SUBSTITUIR" onAction="#onReplaceApk" styleClass="button,secondary"/>
+                        <Button text="EDITAR" onAction="#onEditApk" styleClass="button,secondary"/>
+                        <Button text="EXCLUIR" onAction="#onRemoveApk" styleClass="button,danger"/>
+                        <Button text="IMPORTAR" onAction="#onImportApk" styleClass="button,secondary"/>
+                    </HBox>
                 </HBox>
-            </HBox>
 
-            <HBox styleClass="toolbar" spacing="10" alignment="CENTER_LEFT">
-                <TextField fx:id="apkSearchField" promptText="Buscar APK, cliente ou versão"
-                           styleClass="search-field" HBox.hgrow="ALWAYS"/>
-                <ComboBox fx:id="apkTypeFilter" styleClass="filter-combo"/>
-            </HBox>
+                <HBox styleClass="toolbar" spacing="10" alignment="CENTER_LEFT">
+                    <TextField fx:id="apkSearchField" promptText="Buscar APK, cliente ou versão"
+                               styleClass="search-field" HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="apkTypeFilter" styleClass="filter-combo"/>
+                </HBox>
 
-            <TableView fx:id="apkTable" styleClass="data-table" VBox.vgrow="ALWAYS">
-                <columns>
-                    <TableColumn fx:id="apkNameColumn" text="Nome do APK" prefWidth="200"/>
-                    <TableColumn fx:id="apkVersionColumn" text="Versão" prefWidth="90"/>
-                    <TableColumn fx:id="apkClientColumn" text="Cliente" prefWidth="140"/>
-                    <TableColumn fx:id="apkTypeColumn" text="Tipo" prefWidth="110"/>
-                    <TableColumn fx:id="apkStatusColumn" text="Status" prefWidth="110"/>
-                    <TableColumn fx:id="apkActionColumn" text="Ação" prefWidth="90"/>
-                </columns>
-            </TableView>
-        </VBox>
+                <TableView fx:id="apkTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="apkNameColumn" text="Nome do APK" prefWidth="200"/>
+                        <TableColumn fx:id="apkVersionColumn" text="Versão" prefWidth="90"/>
+                        <TableColumn fx:id="apkClientColumn" text="Cliente" prefWidth="140"/>
+                        <TableColumn fx:id="apkTypeColumn" text="Tipo" prefWidth="110"/>
+                        <TableColumn fx:id="apkStatusColumn" text="Status" prefWidth="110"/>
+                        <TableColumn fx:id="apkActionColumn" text="Ação" prefWidth="90"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </TitledPane>
+
     </VBox>
 </ScrollPane>
