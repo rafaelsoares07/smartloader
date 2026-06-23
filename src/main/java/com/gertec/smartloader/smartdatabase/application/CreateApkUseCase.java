@@ -18,15 +18,24 @@ public class CreateApkUseCase {
                         ApkType type, ApkStatus status, String cloudPath) {}
 
     public Apk execute(Input input) {
+        // Um app é identificado pelo packageName. Todas as versões de um mesmo app compartilham
+        // o tipo (GERTEC/CLIENTE) e o cliente definidos na PRIMEIRA versão. Uma nova versão não
+        // pode mudar de tipo nem ser atribuída a outro cliente.
+        var existingVersions = repository.findAll().stream()
+                .filter(a -> a.packageName().equalsIgnoreCase(input.packageName()))
+                .toList();
+        if (!existingVersions.isEmpty()) {
+            Apk reference = existingVersions.get(0);
+            ApkTypeConsistency.assertSameTypeAndClient(reference, input.type(), input.client());
+        }
+
         Apk apk = Apk.create(input.apkFileName(), input.packageName(), input.label(),
                 input.versionName(), input.versionCode(), input.client(),
                 input.type(), input.status(), input.cloudPath());
 
         // Garante que todo pacote tenha uma versão principal: a PRIMEIRA versão de um pacote
         // nasce principal. As demais nascem normais e são promovidas via SetPrincipalApkUseCase.
-        boolean packageHasVersion = repository.findAll().stream()
-                .anyMatch(a -> a.packageName().equalsIgnoreCase(input.packageName()));
-        if (!packageHasVersion) {
+        if (existingVersions.isEmpty()) {
             apk = apk.withPrincipal(true);
         }
 

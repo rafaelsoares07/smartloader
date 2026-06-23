@@ -40,8 +40,8 @@ public class UpdateSigningProfileUseCase {
         if (!validation.valid())
             throw new IllegalArgumentException("Chave inválida: " + validation.message());
 
-        // Chave validada: mantém o status escolhido, ou ATIVA quando não informado.
-        SigningProfileStatus status = input.status() == null ? SigningProfileStatus.ATIVA : input.status();
+        // Chave validada: mantém o status escolhido; quando não informado, preserva o status atual.
+        SigningProfileStatus status = input.status() == null ? existing.status() : input.status();
 
         // Reconstrói mantendo o id e a data de criação; updatedAt é renovado pelo construtor de domínio.
         SigningProfile updated = new SigningProfile(

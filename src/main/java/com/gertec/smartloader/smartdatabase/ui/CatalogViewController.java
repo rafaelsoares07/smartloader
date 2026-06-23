@@ -34,7 +34,6 @@ import com.gertec.smartloader.smartdatabase.domain.entity.SigningProfile;
 import com.gertec.smartloader.smartdatabase.domain.entity.TerminalModel;
 import com.gertec.smartloader.smartdatabase.domain.enums.ApkStatus;
 import com.gertec.smartloader.smartdatabase.domain.enums.ApkType;
-import com.gertec.smartloader.smartdatabase.domain.enums.SigningProfileStatus;
 import com.gertec.smartloader.smartdatabase.domain.enums.SigningProfileType;
 import com.gertec.smartloader.smartdatabase.domain.enums.TerminalType;
 import javafx.animation.FadeTransition;
@@ -136,11 +135,11 @@ public class CatalogViewController {
     @FXML private ComboBox<String> apkTypeFilter;
     @FXML private TreeTableView<ApkRow> apkTree;
     @FXML private TreeTableColumn<ApkRow, String> apkTitleColumn;
+    @FXML private TreeTableColumn<ApkRow, String> apkVersionColumn;
     @FXML private TreeTableColumn<ApkRow, String> apkSubtitleColumn;
     @FXML private TreeTableColumn<ApkRow, Boolean> apkCurrentColumn;
     @FXML private TreeTableColumn<ApkRow, String> apkClientColumn;
     @FXML private TreeTableColumn<ApkRow, ApkType> apkTypeColumn;
-    @FXML private TreeTableColumn<ApkRow, ApkStatus> apkStatusColumn;
     @FXML private TreeTableColumn<ApkRow, Void> apkActionColumn;
     @FXML private Button apkNewVersionButton;
     @FXML private Button apkSetPrincipalButton;
@@ -198,7 +197,6 @@ public class CatalogViewController {
     @FXML private TableColumn<SigningProfile, String> signingAliasColumn;
     @FXML private TableColumn<SigningProfile, SigningProfileType> signingTypeColumn;
     @FXML private TableColumn<SigningProfile, String> signingFileColumn;
-    @FXML private TableColumn<SigningProfile, SigningProfileStatus> signingStatusColumn;
     @FXML private TableColumn<SigningProfile, Void> signingActionColumn;
     @FXML private Button signingEditButton;
     @FXML private Button signingDeleteButton;
@@ -336,24 +334,19 @@ public class CatalogViewController {
      * Para o grupo, {@code apk} aponta para a versão mais recente — assim "Nova versão" a partir
      * do grupo herda os dados certos. {@code current} marca a versão vigente (maior versionCode).
      */
-    private record ApkRow(boolean group, String title, String subtitle, String client,
-                          ApkType type, ApkStatus status, boolean current, Apk apk) {}
+    private record ApkRow(boolean group, String title, String version, String subtitle, String client,
+                          ApkType type, boolean current, Apk apk) {}
 
     private void configureApkTable() {
         apkTitleColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getValue().title()));
+        apkVersionColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getValue().version()));
         apkSubtitleColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getValue().subtitle()));
         apkClientColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getValue().client()));
         apkTypeColumn.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getValue().type()));
-        apkStatusColumn.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getValue().status()));
         apkCurrentColumn.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getValue().current()));
 
         apkTypeColumn.setCellFactory(col -> treeBadgeCell(type ->
                 type == ApkType.GERTEC ? "badge-gertec" : "badge-cliente"));
-        apkStatusColumn.setCellFactory(col -> treeBadgeCell(status -> switch (status) {
-            case ATIVO -> "badge-ativo";
-            case PENDENTE -> "badge-pendente";
-            case INATIVO -> "badge-inativo";
-        }));
         apkCurrentColumn.setCellFactory(col -> currentBadgeCell());
         apkActionColumn.setCellFactory(col -> treeActionCell(
                 row -> !row.group() && row.apk() != null,
@@ -367,7 +360,7 @@ public class CatalogViewController {
         apkTypeFilter.getSelectionModel().selectFirst();
 
         apkTree.setShowRoot(false);
-        apkTree.setRoot(new TreeItem<>(new ApkRow(true, "", "", "", null, null, false, null)));
+        apkTree.setRoot(new TreeItem<>(new ApkRow(true, "", "", "", "", null, false, null)));
 
         // Busca e filtro reconstroem a árvore aplicando o predicado já existente.
         apkSearchField.textProperty().addListener((o, old, val) -> rebuildApkTree());
@@ -397,15 +390,16 @@ public class CatalogViewController {
             Apk latest = versions.get(0);
 
             String countText = versions.size() == 1 ? "1 versão" : versions.size() + " versões";
-            ApkRow groupRow = new ApkRow(true, latest.label(),
-                    entry.getKey() + "  ·  " + countText, "", null, null, false, latest);
+            ApkRow groupRow = new ApkRow(true, latest.label(), "",
+                    entry.getKey() + "  ·  " + countText, "", null, false, latest);
             TreeItem<ApkRow> groupItem = new TreeItem<>(groupRow);
             groupItem.setExpanded(true);
 
             for (Apk version : versions) {
+                // A versão fica na coluna dedicada; o nome do app vem da linha-pai (grupo).
                 // O selo "ATUAL" segue o flag principal (escolha manual), não o versionCode.
-                ApkRow leaf = new ApkRow(false, "v" + version.versionName(), version.apkFileName(),
-                        version.client(), version.type(), version.status(),
+                ApkRow leaf = new ApkRow(false, "", version.versionName(), version.apkFileName(),
+                        version.client(), version.type(),
                         version.principal(), version);
                 groupItem.getChildren().add(new TreeItem<>(leaf));
             }
@@ -460,7 +454,7 @@ public class CatalogViewController {
         ApkForm prefill = new ApkForm(meta.fileName(), meta.packageName(), meta.label(),
                 meta.versionName(), meta.versionCode(), "", ApkType.GERTEC, ApkStatus.PENDENTE,
                 file.getAbsolutePath(), false);
-        showApkDialog("Adicionar APK", prefill, true).ifPresent(form -> {
+        showApkDialog("Adicionar APK", prefill, true, false).ifPresent(form -> {
             try {
                 Apk created = createApk.execute(new CreateApkUseCase.Input(form.apkFileName(),
                         form.packageName(), form.label(), form.versionName(), form.versionCode(),
@@ -505,7 +499,7 @@ public class CatalogViewController {
         ApkForm prefill = new ApkForm(meta.fileName(), selected.packageName(), selected.label(),
                 meta.versionName(), meta.versionCode(), selected.client(), selected.type(),
                 ApkStatus.PENDENTE, file.getAbsolutePath(), false);
-        showApkDialog("Nova versão · " + selected.label(), prefill, true).ifPresent(form -> {
+        showApkDialog("Nova versão · " + selected.label(), prefill, true, true).ifPresent(form -> {
             try {
                 Apk created = createApk.execute(new CreateApkUseCase.Input(form.apkFileName(),
                         form.packageName(), form.label(), form.versionName(), form.versionCode(),
@@ -541,7 +535,7 @@ public class CatalogViewController {
             showError("Selecione uma versão (linha-filha) para editar.");
             return;
         }
-        showApkDialog("Editar APK", formOf(selected), false).ifPresent(form -> {
+        showApkDialog("Editar APK", formOf(selected), false, true).ifPresent(form -> {
             try {
                 updateApk.execute(new UpdateApkUseCase.Input(selected.id(), form.apkFileName(),
                         form.packageName(), form.label(), form.versionName(), form.versionCode(),
@@ -625,8 +619,11 @@ public class CatalogViewController {
     /**
      * @param showPrincipalOption quando true, mostra a opção "Definir como versão principal"
      *        (usado em adicionar/nova versão; na edição o principal é preservado).
+     * @param lockOrigin quando true, trava o seletor de Cliente/Origem: o app mantém o tipo e o
+     *        cliente da primeira versão (não pode mudar ao adicionar nova versão nem na edição).
      */
-    private Optional<ApkForm> showApkDialog(String title, ApkForm prefill, boolean showPrincipalOption) {
+    private Optional<ApkForm> showApkDialog(String title, ApkForm prefill,
+                                            boolean showPrincipalOption, boolean lockOrigin) {
         Dialog<ApkForm> dialog = newFormDialog(title);
         ButtonType saveButton = addSaveButton(dialog);
 
@@ -649,6 +646,7 @@ public class CatalogViewController {
             origin.getItems().add(new ClientChoice(c));
         }
         setComboDisplay(origin, ClientChoice::display);
+        origin.setDisable(lockOrigin);
         ComboBox<ApkStatus> status = new ComboBox<>(FXCollections.observableArrayList(ApkStatus.values()));
         TextField cloudPath = new TextField();
         cloudPath.setPromptText("caminho em nuvem / referência");
@@ -872,19 +870,12 @@ public class CatalogViewController {
         signingAliasColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().keyAlias()));
         signingFileColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().keystoreFileName()));
         signingTypeColumn.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().type()));
-        signingStatusColumn.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().status()));
 
         signingTypeColumn.setCellFactory(col -> badgeCell(type -> switch (type) {
             case DEBUG -> "badge-debug";
             case RELEASE -> "badge-release";
             case GERTEC -> "badge-gertec";
             case CLIENTE -> "badge-cliente";
-        }));
-        signingStatusColumn.setCellFactory(col -> badgeCell(status -> switch (status) {
-            case ATIVA -> "badge-active";
-            case INATIVA -> "badge-inactive";
-            case PENDENTE -> "badge-pending";
-            case INVALIDA -> "badge-invalid";
         }));
         signingActionColumn.setCellFactory(col -> actionCell(this::showSigningProfileDetails));
 
@@ -922,7 +913,7 @@ public class CatalogViewController {
                 SigningProfile created = createSigningProfile.execute(new CreateSigningProfileUseCase.Input(
                         form.name(), form.keystorePath(), form.alias(),
                         form.keystorePassword(), form.keyPassword(),
-                        form.type(), form.status(), form.note()));
+                        form.type(), null, form.note()));
                 linkSignatureToOdm(created, form.linkedOdm());
                 refreshSigningProfiles();
                 flashStatus("Assinatura adicionada.");
@@ -944,7 +935,7 @@ public class CatalogViewController {
                 updateSigningProfile.execute(new UpdateSigningProfileUseCase.Input(
                         selected.id(), form.name(), form.keystorePath(), form.alias(),
                         form.keystorePassword(), form.keyPassword(),
-                        form.type(), form.status(), form.note()));
+                        form.type(), null, form.note()));
                 linkSignatureToOdm(selected, form.linkedOdm());
                 refreshSigningProfiles();
                 flashStatus("Assinatura atualizada.");
@@ -954,7 +945,8 @@ public class CatalogViewController {
         });
     }
 
-    // Liga (1:1) a assinatura à ODM escolhida no diálogo, se houver. Não é obrigatório vincular.
+    // Liga (1:1) a assinatura à ODM escolhida no diálogo. O vínculo é obrigatório: o diálogo
+    // já bloqueia o salvamento sem ODM, então aqui só guardamos contra null por segurança.
     private void linkSignatureToOdm(SigningProfile signature, Odm odm) {
         if (odm == null) {
             return;
@@ -986,8 +978,7 @@ public class CatalogViewController {
     /** Form fields collected by the signing dialog (UI-only transport). */
     private record SigningForm(String name, String alias, String keystorePath,
                                String keystorePassword, String keyPassword,
-                               SigningProfileType type, SigningProfileStatus status,
-                               String note, Odm linkedOdm) {}
+                               SigningProfileType type, String note, Odm linkedOdm) {}
 
     private Optional<SigningForm> showSigningDialog(String title, SigningProfile base) {
         Dialog<SigningForm> dialog = newFormDialog(title);
@@ -1003,11 +994,9 @@ public class CatalogViewController {
         keyPassword.setPromptText("Senha da chave");
         ComboBox<SigningProfileType> type = new ComboBox<>(FXCollections.observableArrayList(SigningProfileType.values()));
         type.setMaxWidth(Double.MAX_VALUE);
-        ComboBox<SigningProfileStatus> status = new ComboBox<>(FXCollections.observableArrayList(SigningProfileStatus.values()));
-        status.setMaxWidth(Double.MAX_VALUE);
         ComboBox<Odm> linkedOdm = new ComboBox<>(odmMaster);
         linkedOdm.setMaxWidth(Double.MAX_VALUE);
-        linkedOdm.setPromptText("Nenhuma (vincular depois)");
+        linkedOdm.setPromptText("Selecione a ODM");
         setComboDisplay(linkedOdm, Odm::name);
         TextField note = new TextField();
         note.setPromptText("Observação");
@@ -1039,7 +1028,6 @@ public class CatalogViewController {
             name.setText(base.name());
             alias.setText(base.keyAlias());
             type.setValue(base.type());
-            status.setValue(base.status());
             note.setText(base.note());
             linkedOdm.setValue(findOdmBySignatureId(base.id()));
             // Senhas ficam mascaradas no PasswordField (nunca em texto puro na tela).
@@ -1055,8 +1043,7 @@ public class CatalogViewController {
         grid.addRow(row++, new Label("Senha do keystore"), keystorePassword);
         grid.addRow(row++, new Label("Senha da chave"), keyPassword);
         grid.addRow(row++, new Label("Tipo"), type);
-        grid.addRow(row++, new Label("Status"), status);
-        grid.addRow(row++, new Label("Vincular à ODM (opcional)"), linkedOdm);
+        grid.addRow(row++, new Label("ODM"), linkedOdm);
         grid.addRow(row, new Label("Observação (opcional)"), note);
         dialog.getDialogPane().setContent(grid);
 
@@ -1064,9 +1051,13 @@ public class CatalogViewController {
             if (button != saveButton) {
                 return null;
             }
+            if (linkedOdm.getValue() == null) {
+                showError("Selecione a ODM à qual a assinatura será vinculada.");
+                return null;
+            }
             return new SigningForm(name.getText(), alias.getText(), keystorePathHolder[0],
                     keystorePassword.getText(), keyPassword.getText(),
-                    type.getValue(), status.getValue(), note.getText(), linkedOdm.getValue());
+                    type.getValue(), note.getText(), linkedOdm.getValue());
         });
 
         return dialog.showAndWait();
@@ -1085,7 +1076,6 @@ public class CatalogViewController {
         Label info = new Label(
                 "Alias: " + profile.keyAlias() + "\n"
                         + "Tipo: " + profile.type() + "\n"
-                        + "Status: " + profile.status() + "\n"
                         + "Arquivo: " + profile.keystoreFileName() + "\n"
                         + "Senha do keystore: ********\n"
                         + "Senha da chave: ********\n"

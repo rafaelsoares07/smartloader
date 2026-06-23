@@ -131,7 +131,7 @@
             <VBox styleClass="repo-card" spacing="16">
 
                 <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
-                    <Label text="Cadastre a chave e, opcionalmente, já vincule (1:1) a uma ODM"
+                    <Label text="Cadastre a chave e vincule a uma ODM existente."
                            styleClass="card-subtitle"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
@@ -153,15 +153,14 @@
                         <TableColumn fx:id="signingAliasColumn" text="Alias" prefWidth="150"/>
                         <TableColumn fx:id="signingTypeColumn" text="Tipo" prefWidth="110"/>
                         <TableColumn fx:id="signingFileColumn" text="Arquivo" prefWidth="200"/>
-                        <TableColumn fx:id="signingStatusColumn" text="Status" prefWidth="110"/>
                         <TableColumn fx:id="signingActionColumn" text="Ação" prefWidth="90"/>
                     </columns>
                 </TableView>
             </VBox>
         </TitledPane>
 
-        <!-- ============ Seção: Clientes (alimenta o seletor de origem do APK) ============ -->
-        <TitledPane text="CLIENTES" styleClass="repo-pane" expanded="false" animated="true">
+        <!-- ============ Seção: Perfis de Clientes (alimenta o seletor de origem do APK) ============ -->
+        <TitledPane text="PERFIS DE CLIENTES" styleClass="repo-pane" expanded="false" animated="true">
             <VBox styleClass="repo-card" spacing="16">
 
                 <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
@@ -218,12 +217,12 @@
                 <!-- Árvore: cada app (pacote) é uma linha-pai que expande nas suas versões. -->
                 <TreeTableView fx:id="apkTree" styleClass="data-table" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TreeTableColumn fx:id="apkTitleColumn" text="App / Versão" prefWidth="240"/>
+                        <TreeTableColumn fx:id="apkTitleColumn" text="App" prefWidth="220"/>
+                        <TreeTableColumn fx:id="apkVersionColumn" text="Versão" prefWidth="100"/>
                         <TreeTableColumn fx:id="apkSubtitleColumn" text="Pacote / Arquivo" prefWidth="260"/>
                         <TreeTableColumn fx:id="apkCurrentColumn" text="Atual" prefWidth="80"/>
                         <TreeTableColumn fx:id="apkClientColumn" text="Cliente" prefWidth="130"/>
                         <TreeTableColumn fx:id="apkTypeColumn" text="Tipo" prefWidth="100"/>
-                        <TreeTableColumn fx:id="apkStatusColumn" text="Status" prefWidth="100"/>
                         <TreeTableColumn fx:id="apkActionColumn" text="Ação" prefWidth="80"/>
                     </columns>
                 </TreeTableView>
