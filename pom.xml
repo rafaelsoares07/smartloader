@@ -25,6 +25,7 @@
         <spring-boot.version>3.5.15</spring-boot.version>
         <javafx.version>21.0.8</javafx.version>
         <archunit.version>1.4.2</archunit.version>
+        <apk-parser.version>2.6.10</apk-parser.version>
         <javafx-maven-plugin.version>0.0.8</javafx-maven-plugin.version>
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
@@ -58,6 +59,17 @@
             </dependency>
             JPA entities will live in the catalog infrastructure layer, DISTINCT from domain objects.
         -->
+
+        <!--
+            APK metadata reader (pure Java, sem dependências pesadas): lê o AndroidManifest
+            binário para extrair package/label/versionName/versionCode. Usado SOMENTE pelo
+            adapter na infraestrutura (smartdatabase.infrastructure), nunca pelo domínio/application.
+        -->
+        <dependency>
+            <groupId>net.dongliu</groupId>
+            <artifactId>apk-parser</artifactId>
+            <version>${apk-parser.version}</version>
+        </dependency>
 
         <!-- JavaFX -->
         <dependency>

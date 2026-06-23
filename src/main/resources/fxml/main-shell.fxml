@@ -39,7 +39,7 @@
 
             <!-- Section: Operação -->
             <Label styleClass="section-title" text="Operação" />
-            <Button fx:id="catalogButton" maxWidth="Infinity" onAction="#showCatalog" styleClass="nav-item" text="Smart Databe" />
+            <Button fx:id="catalogButton" maxWidth="Infinity" onAction="#showCatalog" styleClass="nav-item" text="Smart Database" />
             <Button fx:id="profileButton" maxWidth="Infinity" onAction="#showProfile" styleClass="nav-item" text="Smart Package" />
             <Button fx:id="recordingButton" maxWidth="Infinity" onAction="#showRecording" styleClass="nav-item" text="Smart Hub" />
 

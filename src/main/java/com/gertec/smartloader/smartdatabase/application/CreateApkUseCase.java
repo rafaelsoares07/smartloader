@@ -21,6 +21,15 @@ public class CreateApkUseCase {
         Apk apk = Apk.create(input.apkFileName(), input.packageName(), input.label(),
                 input.versionName(), input.versionCode(), input.client(),
                 input.type(), input.status(), input.cloudPath());
+
+        // Garante que todo pacote tenha uma versão principal: a PRIMEIRA versão de um pacote
+        // nasce principal. As demais nascem normais e são promovidas via SetPrincipalApkUseCase.
+        boolean packageHasVersion = repository.findAll().stream()
+                .anyMatch(a -> a.packageName().equalsIgnoreCase(input.packageName()));
+        if (!packageHasVersion) {
+            apk = apk.withPrincipal(true);
+        }
+
         repository.save(apk);
         // Aqui é o pulo do gato: o repository tem que ser implementado, então só estamos
         // pedindo para salvar e não falando COMO isso vai ser salvo. Nesse ponto não nos importa.

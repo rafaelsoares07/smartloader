@@ -4,27 +4,27 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.TreeTableColumn?>
+<?import javafx.scene.control.TreeTableView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <!--
-    Smart Database view: cada repositório agora é um TitledPane recolhível
-    (seções independentes — abrir uma não fecha as outras). A ORDEM DE CRIAÇÃO
-    (de cima para baixo) é mantida:
-        1) Criar ODM
-        2) Criar modelos de terminal dessa ODM
-        3) Criar assinatura e, no mesmo card, vinculá-la (1:1) à ODM
-    O card de APKs é um repositório independente e fica ao final.
-    Os botões de ação ficam no topo do conteúdo: só aparecem com a seção aberta.
+    Smart Database view: cada repositório é um TitledPane recolhível.
+    Padrão de interação (uniforme em todas as seções):
+        - ADICIONAR e EDITAR abrem um DIÁLOGO (pop-up) — o formulário não fica no card.
+        - EDITAR / EXCLUIR só ficam habilitados quando há uma linha selecionada.
+        - Selecionar uma linha NÃO preenche nada na tela (sem efeito colateral).
+    A ORDEM DE CRIAÇÃO (de cima para baixo) é mantida:
+        1) Criar ODM  2) Criar terminais dessa ODM  3) Criar assinatura e vinculá-la (1:1) à ODM
+    O card de APKs é independente e fica ao final.
     Todas as cores vivem em theme.css (apenas styleClass aqui, nunca cor hardcoded).
-    O comportamento é coordenado pelo controller, que só chama use cases.
 -->
 <ScrollPane fitToWidth="true" styleClass="catalog-scroll"
             xmlns="http://javafx.com/javafx"
@@ -54,7 +54,14 @@
                 <Label text="Assinaturas" styleClass="summary-card-title"/>
                 <Label fx:id="signingCountLabel" text="0" styleClass="summary-card-value"/>
             </VBox>
+            <VBox styleClass="summary-card">
+                <Label text="Clientes" styleClass="summary-card-title"/>
+                <Label fx:id="clientCountLabel" text="0" styleClass="summary-card-value"/>
+            </VBox>
         </HBox>
+
+        <!-- Faixa de feedback transitório (sucesso ao criar/editar/excluir). -->
+        <Label fx:id="statusLabel" styleClass="status-flash" visible="false" managed="false"/>
 
 
         <!-- ============ 1) Seção: ODMs (criado primeiro) ============ -->
@@ -67,17 +74,10 @@
                     <Region HBox.hgrow="ALWAYS"/>
                     <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
                         <Button text="ADICIONAR ODM" onAction="#onAddOdm" styleClass="button,primary"/>
-                        <Button text="EDITAR" onAction="#onEditOdm" styleClass="button,secondary"/>
-                        <Button text="EXCLUIR" onAction="#onRemoveOdm" styleClass="button,danger"/>
+                        <Button fx:id="odmEditButton" text="EDITAR" onAction="#onEditOdm" styleClass="button,secondary"/>
+                        <Button fx:id="odmDeleteButton" text="EXCLUIR" onAction="#onRemoveOdm" styleClass="button,danger"/>
                     </HBox>
                 </HBox>
-
-                <VBox styleClass="form-block" spacing="10">
-                    <VBox spacing="4">
-                        <Label text="Nome da ODM" styleClass="field-label"/>
-                        <TextField fx:id="odmNameField" promptText="Nome da ODM" styleClass="search-field"/>
-                    </VBox>
-                </VBox>
 
                 <TextField fx:id="odmSearchField" promptText="Buscar ODM ou assinatura"
                            styleClass="search-field"/>
@@ -101,30 +101,16 @@
                            styleClass="card-subtitle"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
-                        <Button text="ADICIONAR" onAction="#onAddTerminal" styleClass="button,primary"/>
-                        <Button text="EDITAR" onAction="#onEditTerminal" styleClass="button,secondary"/>
-                        <Button text="EXCLUIR" onAction="#onRemoveTerminal" styleClass="button,danger"/>
+                        <Button fx:id="terminalAddButton" text="ADICIONAR" onAction="#onAddTerminal" styleClass="button,primary"/>
+                        <Button fx:id="terminalEditButton" text="EDITAR" onAction="#onEditTerminal" styleClass="button,secondary"/>
+                        <Button fx:id="terminalDeleteButton" text="EXCLUIR" onAction="#onRemoveTerminal" styleClass="button,danger"/>
                     </HBox>
                 </HBox>
 
-                <VBox styleClass="form-block" spacing="10">
-                    <HBox spacing="10">
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Nome do terminal" styleClass="field-label"/>
-                            <TextField fx:id="terminalNameField" promptText="Nome do terminal"
-                                       styleClass="search-field"/>
-                        </VBox>
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Tipo" styleClass="field-label"/>
-                            <ComboBox fx:id="terminalTypeCombo" styleClass="filter-combo" maxWidth="Infinity"/>
-                        </VBox>
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="ODM" styleClass="field-label"/>
-                            <ComboBox fx:id="terminalOdmCombo" styleClass="filter-combo" maxWidth="Infinity"
-                                      promptText="Selecione a ODM"/>
-                        </VBox>
-                    </HBox>
-                </VBox>
+                <!-- Dica de dependência: aparece só quando não há nenhuma ODM cadastrada. -->
+                <Label fx:id="terminalOdmHint"
+                       text="⚠  Cadastre uma ODM na seção 1 antes de adicionar terminais."
+                       styleClass="hint-warning" visible="false" managed="false"/>
 
                 <TextField fx:id="terminalSearchField" promptText="Buscar por nome ou tipo"
                            styleClass="search-field"/>
@@ -150,69 +136,10 @@
                     <Region HBox.hgrow="ALWAYS"/>
                     <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
                         <Button text="ADICIONAR ASSINATURA" onAction="#onAddSigningProfile" styleClass="button,primary"/>
-                        <Button text="EDITAR" onAction="#onEditSigningProfile" styleClass="button,secondary"/>
-                        <Button text="EXCLUIR" onAction="#onRemoveSigningProfile" styleClass="button,danger"/>
-                        <Button text="IMPORTAR JKS" onAction="#onImportJks" styleClass="button,secondary"/>
+                        <Button fx:id="signingEditButton" text="EDITAR" onAction="#onEditSigningProfile" styleClass="button,secondary"/>
+                        <Button fx:id="signingDeleteButton" text="EXCLUIR" onAction="#onRemoveSigningProfile" styleClass="button,danger"/>
                     </HBox>
                 </HBox>
-
-                <!-- Formulário inline: senhas sempre em PasswordField -->
-                <VBox styleClass="form-block" spacing="10">
-                    <HBox spacing="10">
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Nome da assinatura" styleClass="field-label"/>
-                            <TextField fx:id="signingNameField" promptText="Nome da assinatura"
-                                       styleClass="search-field"/>
-                        </VBox>
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Alias da chave" styleClass="field-label"/>
-                            <TextField fx:id="signingAliasField" promptText="Alias da chave"
-                                       styleClass="search-field"/>
-                        </VBox>
-                    </HBox>
-
-                    <HBox spacing="10" alignment="CENTER_LEFT">
-                        <Button text="Escolher arquivo (.jks / .keystore)" onAction="#onChooseKeystoreFile"
-                                styleClass="button,secondary"/>
-                        <Label fx:id="keystoreFileLabel" text="Nenhum arquivo selecionado"
-                               styleClass="card-subtitle" HBox.hgrow="ALWAYS"/>
-                    </HBox>
-
-                    <HBox spacing="10">
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Senha do keystore" styleClass="field-label"/>
-                            <PasswordField fx:id="keystorePasswordField" promptText="Senha do keystore"
-                                           styleClass="search-field"/>
-                        </VBox>
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Senha da chave" styleClass="field-label"/>
-                            <PasswordField fx:id="keyPasswordField" promptText="Senha da chave"
-                                           styleClass="search-field"/>
-                        </VBox>
-                    </HBox>
-
-                    <HBox spacing="10">
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Tipo" styleClass="field-label"/>
-                            <ComboBox fx:id="signingTypeCombo" styleClass="filter-combo" maxWidth="Infinity"/>
-                        </VBox>
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Status" styleClass="field-label"/>
-                            <ComboBox fx:id="signingStatusCombo" styleClass="filter-combo" maxWidth="Infinity"/>
-                        </VBox>
-                        <VBox spacing="4" HBox.hgrow="ALWAYS">
-                            <Label text="Vincular à ODM (opcional)" styleClass="field-label"/>
-                            <ComboBox fx:id="signingOdmCombo" styleClass="filter-combo" maxWidth="Infinity"
-                                      promptText="Nenhuma (vincular depois)"/>
-                        </VBox>
-                    </HBox>
-
-                    <VBox spacing="4">
-                        <Label text="Observação (opcional)" styleClass="field-label"/>
-                        <TextField fx:id="signingNoteField" promptText="Observação"
-                                   styleClass="search-field"/>
-                    </VBox>
-                </VBox>
 
                 <HBox styleClass="toolbar" spacing="10" alignment="CENTER_LEFT">
                     <TextField fx:id="signingSearchField" promptText="Buscar assinatura, alias ou tipo"
@@ -233,19 +160,52 @@
             </VBox>
         </TitledPane>
 
+        <!-- ============ Seção: Clientes (alimenta o seletor de origem do APK) ============ -->
+        <TitledPane text="CLIENTES" styleClass="repo-pane" expanded="false" animated="true">
+            <VBox styleClass="repo-card" spacing="16">
+
+                <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
+                    <Label text="Clientes e os aplicativos vinculados a cada um (histórico de versões e versão atual)"
+                           styleClass="card-subtitle"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
+                        <Button text="ADICIONAR CLIENTE" onAction="#onAddClient" styleClass="button,primary"/>
+                        <Button fx:id="clientSetPrincipalButton" text="TORNAR PRINCIPAL" onAction="#onSetPrincipalClientApk" styleClass="button,secondary"/>
+                        <Button fx:id="clientEditButton" text="EDITAR" onAction="#onEditClient" styleClass="button,secondary"/>
+                        <Button fx:id="clientDeleteButton" text="EXCLUIR" onAction="#onRemoveClient" styleClass="button,danger"/>
+                    </HBox>
+                </HBox>
+
+                <TextField fx:id="clientSearchField" promptText="Buscar cliente, app ou versão" styleClass="search-field"/>
+
+                <!-- Árvore: cliente → apps vinculados → versões (com selo ATUAL na principal). -->
+                <TreeTableView fx:id="clientTree" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TreeTableColumn fx:id="clientTitleColumn" text="Cliente / App / Versão" prefWidth="260"/>
+                        <TreeTableColumn fx:id="clientSubtitleColumn" text="Pacote / Arquivo" prefWidth="260"/>
+                        <TreeTableColumn fx:id="clientCurrentColumn" text="Atual" prefWidth="80"/>
+                        <TreeTableColumn fx:id="clientTypeColumn" text="Tipo" prefWidth="100"/>
+                        <TreeTableColumn fx:id="clientStatusColumn" text="Status" prefWidth="100"/>
+                        <TreeTableColumn fx:id="clientActionColumn" text="Ação" prefWidth="80"/>
+                    </columns>
+                </TreeTableView>
+            </VBox>
+        </TitledPane>
+
         <!-- ============ Seção: Repositório de APKs (independente) ============ -->
         <TitledPane text="REPOSITÓRIO DE APKS" styleClass="repo-pane" expanded="false" animated="true">
             <VBox styleClass="repo-card" spacing="16">
 
                 <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
-                    <Label text="Referências de caminho em nuvem" styleClass="card-subtitle"/>
+                    <Label text="Selecione um arquivo .apk: nome, pacote e versão são lidos do próprio arquivo"
+                           styleClass="card-subtitle"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <HBox styleClass="card-actions" spacing="8" alignment="CENTER_RIGHT">
                         <Button text="ADICIONAR APK" onAction="#onAddApk" styleClass="button,primary"/>
-                        <Button text="SUBSTITUIR" onAction="#onReplaceApk" styleClass="button,secondary"/>
-                        <Button text="EDITAR" onAction="#onEditApk" styleClass="button,secondary"/>
-                        <Button text="EXCLUIR" onAction="#onRemoveApk" styleClass="button,danger"/>
-                        <Button text="IMPORTAR" onAction="#onImportApk" styleClass="button,secondary"/>
+                        <Button fx:id="apkNewVersionButton" text="NOVA VERSÃO" onAction="#onNewApkVersion" styleClass="button,secondary"/>
+                        <Button fx:id="apkSetPrincipalButton" text="TORNAR PRINCIPAL" onAction="#onSetPrincipalApk" styleClass="button,secondary"/>
+                        <Button fx:id="apkEditButton" text="EDITAR" onAction="#onEditApk" styleClass="button,secondary"/>
+                        <Button fx:id="apkDeleteButton" text="EXCLUIR" onAction="#onRemoveApk" styleClass="button,danger"/>
                     </HBox>
                 </HBox>
 
@@ -255,16 +215,18 @@
                     <ComboBox fx:id="apkTypeFilter" styleClass="filter-combo"/>
                 </HBox>
 
-                <TableView fx:id="apkTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                <!-- Árvore: cada app (pacote) é uma linha-pai que expande nas suas versões. -->
+                <TreeTableView fx:id="apkTree" styleClass="data-table" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="apkNameColumn" text="Nome do APK" prefWidth="200"/>
-                        <TableColumn fx:id="apkVersionColumn" text="Versão" prefWidth="90"/>
-                        <TableColumn fx:id="apkClientColumn" text="Cliente" prefWidth="140"/>
-                        <TableColumn fx:id="apkTypeColumn" text="Tipo" prefWidth="110"/>
-                        <TableColumn fx:id="apkStatusColumn" text="Status" prefWidth="110"/>
-                        <TableColumn fx:id="apkActionColumn" text="Ação" prefWidth="90"/>
+                        <TreeTableColumn fx:id="apkTitleColumn" text="App / Versão" prefWidth="240"/>
+                        <TreeTableColumn fx:id="apkSubtitleColumn" text="Pacote / Arquivo" prefWidth="260"/>
+                        <TreeTableColumn fx:id="apkCurrentColumn" text="Atual" prefWidth="80"/>
+                        <TreeTableColumn fx:id="apkClientColumn" text="Cliente" prefWidth="130"/>
+                        <TreeTableColumn fx:id="apkTypeColumn" text="Tipo" prefWidth="100"/>
+                        <TreeTableColumn fx:id="apkStatusColumn" text="Status" prefWidth="100"/>
+                        <TreeTableColumn fx:id="apkActionColumn" text="Ação" prefWidth="80"/>
                     </columns>
-                </TableView>
+                </TreeTableView>
             </VBox>
         </TitledPane>
 

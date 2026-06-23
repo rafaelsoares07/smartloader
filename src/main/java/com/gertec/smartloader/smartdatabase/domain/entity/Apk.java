@@ -19,12 +19,13 @@ public final class Apk {
     private final ApkType type;         // GERTEC ou CLIENTE
     private final ApkStatus status;     // ATIVO, PENDENTE, INATIVO
     private final String cloudPath;     // referência/caminho do arquivo em nuvem
+    private final boolean principal;    // versão "principal/atual" do pacote (1 por packageName)
 
     // Construtor "de reconstrução": usado para recriar um Apk vindo da persistência
     // ou para regravar um Apk editado mantendo o mesmo id.
     public Apk(String id, String apkFileName, String packageName, String label,
                String versionName, long versionCode, String client,
-               ApkType type, ApkStatus status, String cloudPath) {
+               ApkType type, ApkStatus status, String cloudPath, boolean principal) {
         if (id == null || id.isBlank())
             throw new IllegalArgumentException("id é obrigatório");
         if (apkFileName == null || apkFileName.isBlank())
@@ -50,14 +51,22 @@ public final class Apk {
         this.type = type;
         this.status = status;
         this.cloudPath = nullToEmpty(cloudPath);
+        this.principal = principal;
     }
 
     // Fábrica para um Apk NOVO: o domínio gera o próprio id (não depende do banco).
+    // Nasce como não-principal; a promoção é feita depois (SetPrincipalApkUseCase / primeira versão).
     public static Apk create(String apkFileName, String packageName, String label,
                              String versionName, long versionCode, String client,
                              ApkType type, ApkStatus status, String cloudPath) {
         return new Apk(UUID.randomUUID().toString(), apkFileName, packageName, label,
-                versionName, versionCode, client, type, status, cloudPath);
+                versionName, versionCode, client, type, status, cloudPath, false);
+    }
+
+    // Devolve uma cópia com o flag principal alterado, preservando o restante.
+    public Apk withPrincipal(boolean newPrincipal) {
+        return new Apk(id, apkFileName, packageName, label, versionName, versionCode,
+                client, type, status, cloudPath, newPrincipal);
     }
 
     private static String nullToEmpty(String value) {
@@ -74,4 +83,5 @@ public final class Apk {
     public ApkType type() { return type; }
     public ApkStatus status() { return status; }
     public String cloudPath() { return cloudPath; }
+    public boolean principal() { return principal; }
 }

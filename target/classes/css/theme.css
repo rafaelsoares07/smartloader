@@ -367,6 +367,27 @@
     -fx-padding: 0 0 4 0;
 }
 
+/* Dica de dependência (ex.: "cadastre uma ODM primeiro") — âmbar suave. */
+.hint-warning {
+    -fx-background-color: -warning-soft;
+    -fx-text-fill: -warning-text;
+    -fx-border-color: -warning-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-font-size: 12px;
+    -fx-padding: 8 12 8 12;
+}
+
+/* Faixa de feedback transitório de sucesso (criar/editar/excluir) — verde suave. */
+.status-flash {
+    -fx-background-color: -badge-ativo-bg;
+    -fx-text-fill: -badge-ativo-text;
+    -fx-background-radius: 6;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 14 8 14;
+}
+
 /* ---- Collapsible repository sections (TitledPane) ----
    Cada seção (ODM / Terminais / Assinaturas / APKs) é um card branco único:
    a barra do título é clicável e o conteúdo aparece só quando expandido. */

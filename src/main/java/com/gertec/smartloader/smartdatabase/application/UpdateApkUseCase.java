@@ -18,13 +18,14 @@ public class UpdateApkUseCase {
                         ApkType type, ApkStatus status, String cloudPath) {}
 
     public Apk execute(Input input) {
-        if (repository.findById(input.id()).isEmpty())
-            throw new IllegalArgumentException("APK não encontrado para edição");
+        Apk existing = repository.findById(input.id())
+                .orElseThrow(() -> new IllegalArgumentException("APK não encontrado para edição"));
 
-        // Reconstrói a entidade mantendo o mesmo id; a validação vive no domínio.
+        // Reconstrói a entidade mantendo o mesmo id e PRESERVANDO o flag principal
+        // (a troca de versão principal é feita por SetPrincipalApkUseCase, não pela edição).
         Apk updated = new Apk(input.id(), input.apkFileName(), input.packageName(),
                 input.label(), input.versionName(), input.versionCode(), input.client(),
-                input.type(), input.status(), input.cloudPath());
+                input.type(), input.status(), input.cloudPath(), existing.principal());
         repository.save(updated);
         return updated;
     }
