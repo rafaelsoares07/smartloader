@@ -15,7 +15,7 @@ public final class Apk {
     private final String label;         // nome amigável exibido
     private final String versionName;   // ex.: 1.0.0
     private final long versionCode;     // ex.: 100
-    private final String client;        // cliente dono/solicitante do APK
+    private final String clientId;      // id do cliente dono/solicitante (vazio = Padrão Gertec)
     private final ApkType type;         // GERTEC ou CLIENTE
     private final ApkStatus status;     // ATIVO, PENDENTE, INATIVO
     private final String cloudPath;     // referência/caminho do arquivo em nuvem
@@ -24,7 +24,7 @@ public final class Apk {
     // Construtor "de reconstrução": usado para recriar um Apk vindo da persistência
     // ou para regravar um Apk editado mantendo o mesmo id.
     public Apk(String id, String apkFileName, String packageName, String label,
-               String versionName, long versionCode, String client,
+               String versionName, long versionCode, String clientId,
                ApkType type, ApkStatus status, String cloudPath, boolean principal) {
         if (id == null || id.isBlank())
             throw new IllegalArgumentException("id é obrigatório");
@@ -47,7 +47,7 @@ public final class Apk {
         this.label = label;
         this.versionName = nullToEmpty(versionName);
         this.versionCode = versionCode;
-        this.client = nullToEmpty(client);
+        this.clientId = nullToEmpty(clientId);
         this.type = type;
         this.status = status;
         this.cloudPath = nullToEmpty(cloudPath);
@@ -57,16 +57,16 @@ public final class Apk {
     // Fábrica para um Apk NOVO: o domínio gera o próprio id (não depende do banco).
     // Nasce como não-principal; a promoção é feita depois (SetPrincipalApkUseCase / primeira versão).
     public static Apk create(String apkFileName, String packageName, String label,
-                             String versionName, long versionCode, String client,
+                             String versionName, long versionCode, String clientId,
                              ApkType type, ApkStatus status, String cloudPath) {
         return new Apk(UUID.randomUUID().toString(), apkFileName, packageName, label,
-                versionName, versionCode, client, type, status, cloudPath, false);
+                versionName, versionCode, clientId, type, status, cloudPath, false);
     }
 
     // Devolve uma cópia com o flag principal alterado, preservando o restante.
     public Apk withPrincipal(boolean newPrincipal) {
         return new Apk(id, apkFileName, packageName, label, versionName, versionCode,
-                client, type, status, cloudPath, newPrincipal);
+                clientId, type, status, cloudPath, newPrincipal);
     }
 
     private static String nullToEmpty(String value) {
@@ -79,7 +79,7 @@ public final class Apk {
     public String label() { return label; }
     public String versionName() { return versionName; }
     public long versionCode() { return versionCode; }
-    public String client() { return client; }
+    public String clientId() { return clientId; }
     public ApkType type() { return type; }
     public ApkStatus status() { return status; }
     public String cloudPath() { return cloudPath; }

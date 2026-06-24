@@ -266,14 +266,26 @@ public class CatalogViewController {
         configureClientTable();
         configureSummaryCards();
         configureActionButtonStates();
-        // Clientes alimentam o seletor do diálogo de APK; carregados antes dos APKs.
-        refreshClients();
-        refreshApks();
-        // Ordem importa para os combos de dependência: assinaturas alimentam as ODMs,
-        // e as ODMs alimentam o seletor do terminal.
-        refreshSigningProfiles();
-        refreshOdms();
-        refreshTerminals();
+        refreshAll();
+    }
+
+    /**
+     * Recarrega TODOS os masters e reconstrói as árvores derivadas, na ordem em que as
+     * resoluções de nome dependem umas das outras (a fonte do nome é carregada antes de quem
+     * a referencia: assinaturas → ODMs → terminais; clientes → APKs).
+     *
+     * <p>É a única forma de atualização chamada após qualquer mutação. Centralizar aqui
+     * elimina a classe de bug "referência cruzada defasada na tela": como cada
+     * {@code master.setAll(...)} força o re-render e as colunas resolvem o nome cruzado na
+     * hora ({@code odmNameFor}, {@code signatureNameFor}, {@code clientNameFor}), nenhuma
+     * tabela fica com nome antigo após renomear/excluir uma entidade referenciada.</p>
+     */
+    private void refreshAll() {
+        refreshClients();         // clientMaster (+ rebuildClientTree)
+        refreshSigningProfiles(); // signingMaster  → fonte do nome exibido nas ODMs
+        refreshOdms();            // odmMaster       → fonte do nome exibido nos Terminais
+        refreshTerminals();       // terminalMaster  (re-resolve nome da ODM)
+        refreshApks();            // apkMaster (+ rebuild árvores APK e Clientes)
     }
 
     private void configureSummaryCards() {
@@ -399,7 +411,7 @@ public class CatalogViewController {
                 // A versão fica na coluna dedicada; o nome do app vem da linha-pai (grupo).
                 // O selo "ATUAL" segue o flag principal (escolha manual), não o versionCode.
                 ApkRow leaf = new ApkRow(false, "", version.versionName(), version.apkFileName(),
-                        version.client(), version.type(),
+                        clientNameFor(version.clientId()), version.type(),
                         version.principal(), version);
                 groupItem.getChildren().add(new TreeItem<>(leaf));
             }
@@ -432,7 +444,7 @@ public class CatalogViewController {
                     || apk.type().name().equals(typeFilter);
             boolean matchesSearch = search.isBlank()
                     || safeLower(apk.apkFileName()).contains(search)
-                    || safeLower(apk.client()).contains(search)
+                    || safeLower(clientNameFor(apk.clientId())).contains(search)
                     || safeLower(apk.versionName()).contains(search)
                     || safeLower(apk.packageName()).contains(search)
                     || safeLower(apk.label()).contains(search);
@@ -458,11 +470,11 @@ public class CatalogViewController {
             try {
                 Apk created = createApk.execute(new CreateApkUseCase.Input(form.apkFileName(),
                         form.packageName(), form.label(), form.versionName(), form.versionCode(),
-                        form.client(), form.type(), form.status(), form.cloudPath()));
+                        form.clientId(), form.type(), form.status(), form.cloudPath()));
                 if (form.principal()) {
                     setPrincipalApk.execute(created.id());
                 }
-                refreshApks();
+                refreshAll();
                 flashStatus("APK adicionado.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -497,17 +509,17 @@ public class CatalogViewController {
             return;
         }
         ApkForm prefill = new ApkForm(meta.fileName(), selected.packageName(), selected.label(),
-                meta.versionName(), meta.versionCode(), selected.client(), selected.type(),
+                meta.versionName(), meta.versionCode(), selected.clientId(), selected.type(),
                 ApkStatus.PENDENTE, file.getAbsolutePath(), false);
         showApkDialog("Nova versão · " + selected.label(), prefill, true, true).ifPresent(form -> {
             try {
                 Apk created = createApk.execute(new CreateApkUseCase.Input(form.apkFileName(),
                         form.packageName(), form.label(), form.versionName(), form.versionCode(),
-                        form.client(), form.type(), form.status(), form.cloudPath()));
+                        form.clientId(), form.type(), form.status(), form.cloudPath()));
                 if (form.principal()) {
                     setPrincipalApk.execute(created.id());
                 }
-                refreshApks();
+                refreshAll();
                 flashStatus("Nova versão (" + form.versionName() + ") adicionada"
                         + (form.principal() ? " e definida como principal." : "."));
             } catch (IllegalArgumentException e) {
@@ -524,7 +536,7 @@ public class CatalogViewController {
             return;
         }
         setPrincipalApk.execute(selected.id());
-        refreshApks();
+        refreshAll();
         flashStatus("Versão v" + selected.versionName() + " definida como principal.");
     }
 
@@ -539,8 +551,8 @@ public class CatalogViewController {
             try {
                 updateApk.execute(new UpdateApkUseCase.Input(selected.id(), form.apkFileName(),
                         form.packageName(), form.label(), form.versionName(), form.versionCode(),
-                        form.client(), form.type(), form.status(), form.cloudPath()));
-                refreshApks();
+                        form.clientId(), form.type(), form.status(), form.cloudPath()));
+                refreshAll();
                 flashStatus("APK atualizado.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -559,7 +571,7 @@ public class CatalogViewController {
             return;
         }
         removeApk.execute(selected.id());
-        refreshApks();
+        refreshAll();
         flashStatus("APK excluído.");
     }
 
@@ -596,7 +608,7 @@ public class CatalogViewController {
                 "Package: " + apk.packageName() + "\n"
                         + "Label: " + apk.label() + "\n"
                         + "Versão: " + apk.versionName() + " (" + apk.versionCode() + ")\n"
-                        + "Cliente: " + apk.client() + "\n"
+                        + "Cliente: " + (apk.clientId().isBlank() ? "Padrão Gertec" : clientNameFor(apk.clientId())) + "\n"
                         + "Tipo: " + apk.type() + "\n"
                         + "Status: " + apk.status() + "\n"
                         + "Versão principal: " + (apk.principal() ? "Sim" : "Não") + "\n"
@@ -606,13 +618,13 @@ public class CatalogViewController {
 
     /** Form fields collected by the APK dialog (UI-only transport). */
     private record ApkForm(String apkFileName, String packageName, String label, String versionName,
-                           long versionCode, String client, ApkType type, ApkStatus status,
+                           long versionCode, String clientId, ApkType type, ApkStatus status,
                            String cloudPath, boolean principal) {}
 
     /** Converte um Apk persistido em ApkForm para pré-preencher o diálogo de edição. */
     private ApkForm formOf(Apk apk) {
         return new ApkForm(apk.apkFileName(), apk.packageName(), apk.label(), apk.versionName(),
-                apk.versionCode(), apk.client(), apk.type(), apk.status(), apk.cloudPath(),
+                apk.versionCode(), apk.clientId(), apk.type(), apk.status(), apk.cloudPath(),
                 apk.principal());
     }
 
@@ -694,7 +706,7 @@ public class CatalogViewController {
                     label.getText(),
                     versionName.getText(),
                     parseVersionCode(versionCode.getText()),
-                    gertec ? "" : choice.client().name(),
+                    gertec ? "" : choice.client().id(),
                     gertec ? ApkType.GERTEC : ApkType.CLIENTE,
                     status.getValue(),
                     cloudPath.getText(),
@@ -714,7 +726,7 @@ public class CatalogViewController {
     private ClientChoice originChoiceFor(List<ClientChoice> items, ApkForm prefill) {
         if (prefill != null && prefill.type() == ApkType.CLIENTE) {
             for (ClientChoice choice : items) {
-                if (!choice.isGertec() && choice.client().name().equalsIgnoreCase(prefill.client())) {
+                if (!choice.isGertec() && choice.client().id().equals(prefill.clientId())) {
                     return choice;
                 }
             }
@@ -760,7 +772,7 @@ public class CatalogViewController {
             try {
                 createTerminal.execute(new CreateTerminalUseCase.Input(
                         form.name(), form.type(), form.odm().id()));
-                refreshTerminals();
+                refreshAll();
                 flashStatus("Terminal adicionado.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -1234,6 +1246,17 @@ public class CatalogViewController {
         return odm != null ? odm.name() : "—";
     }
 
+    // Resolve o nome do cliente a partir do id guardado no APK: vazio = Padrão Gertec (sem
+    // cliente, exibido em branco); id sem cliente correspondente = "—" (cliente removido).
+    private String clientNameFor(String clientId) {
+        if (clientId == null || clientId.isBlank()) return "";
+        return clientMaster.stream()
+                .filter(c -> c.id().equals(clientId))
+                .map(Client::name)
+                .findFirst()
+                .orElse("—");
+    }
+
     // ===================== Client section =====================
 
     /** Nível de uma linha da árvore de clientes: o cliente, um app vinculado ou uma versão. */
@@ -1288,7 +1311,7 @@ public class CatalogViewController {
             // APKs vinculados a este cliente, agrupados por pacote.
             Map<String, List<Apk>> byPackage = new LinkedHashMap<>();
             for (Apk apk : apkMaster) {
-                if (apk.type() == ApkType.CLIENTE && client.name().equalsIgnoreCase(apk.client())) {
+                if (apk.type() == ApkType.CLIENTE && client.id().equals(apk.clientId())) {
                     byPackage.computeIfAbsent(apk.packageName(), k -> new ArrayList<>()).add(apk);
                 }
             }
@@ -1375,6 +1398,8 @@ public class CatalogViewController {
             try {
                 updateClient.execute(new UpdateClientUseCase.Input(selected.id(), name));
                 refreshClients();
+                // O vínculo é por id, então o rename não toca os APKs; só reexibe o novo nome.
+                rebuildApkTree();
                 flashStatus("Cliente atualizado.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -1390,11 +1415,13 @@ public class CatalogViewController {
             return;
         }
         if (!confirmDelete("Excluir o cliente \"" + selected.name()
-                + "\"? Os APKs já vinculados continuarão com o nome registrado.")) {
+                + "\"? Os APKs vinculados ficarão sem cliente (exibidos como \"—\").")) {
             return;
         }
         removeClient.execute(selected.id());
         refreshClients();
+        // APKs que apontavam para este cliente passam a exibir "—"; reexibe a árvore de APKs.
+        rebuildApkTree();
         flashStatus("Cliente excluído.");
     }
 

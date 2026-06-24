@@ -14,7 +14,7 @@ public class CreateApkUseCase {
     }
 
     public record Input(String apkFileName, String packageName, String label,
-                        String versionName, long versionCode, String client,
+                        String versionName, long versionCode, String clientId,
                         ApkType type, ApkStatus status, String cloudPath) {}
 
     public Apk execute(Input input) {
@@ -26,11 +26,11 @@ public class CreateApkUseCase {
                 .toList();
         if (!existingVersions.isEmpty()) {
             Apk reference = existingVersions.get(0);
-            ApkTypeConsistency.assertSameTypeAndClient(reference, input.type(), input.client());
+            ApkTypeConsistency.assertSameTypeAndClient(reference, input.type(), input.clientId());
         }
 
         Apk apk = Apk.create(input.apkFileName(), input.packageName(), input.label(),
-                input.versionName(), input.versionCode(), input.client(),
+                input.versionName(), input.versionCode(), input.clientId(),
                 input.type(), input.status(), input.cloudPath());
 
         // Garante que todo pacote tenha uma versão principal: a PRIMEIRA versão de um pacote

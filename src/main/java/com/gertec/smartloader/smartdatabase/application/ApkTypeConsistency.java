@@ -11,15 +11,15 @@ final class ApkTypeConsistency {
 
     private ApkTypeConsistency() {}
 
-    static void assertSameTypeAndClient(Apk reference, ApkType newType, String newClient) {
+    static void assertSameTypeAndClient(Apk reference, ApkType newType, String newClientId) {
         if (reference.type() != newType) {
             throw new IllegalArgumentException(
                     "Este app já existe como tipo " + reference.type()
                             + " e não pode mudar de tipo em uma nova versão.");
         }
-        if (!normalize(reference.client()).equalsIgnoreCase(normalize(newClient))) {
+        if (!normalize(reference.clientId()).equals(normalize(newClientId))) {
             throw new IllegalArgumentException(
-                    "Este app pertence a " + describeOwner(reference.client())
+                    "Este app pertence " + describeOwner(reference.clientId())
                             + " e não pode ser atribuído a outro cliente.");
         }
     }
@@ -28,8 +28,7 @@ final class ApkTypeConsistency {
         return value == null ? "" : value.trim();
     }
 
-    private static String describeOwner(String client) {
-        String normalized = normalize(client);
-        return normalized.isBlank() ? "Padrão Gertec" : "ao cliente \"" + normalized + "\"";
+    private static String describeOwner(String clientId) {
+        return normalize(clientId).isBlank() ? "ao Padrão Gertec" : "a outro cliente";
     }
 }

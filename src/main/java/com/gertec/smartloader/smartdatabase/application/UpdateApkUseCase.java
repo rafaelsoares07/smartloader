@@ -14,7 +14,7 @@ public class UpdateApkUseCase {
     }
 
     public record Input(String id, String apkFileName, String packageName, String label,
-                        String versionName, long versionCode, String client,
+                        String versionName, long versionCode, String clientId,
                         ApkType type, ApkStatus status, String cloudPath) {}
 
     public Apk execute(Input input) {
@@ -28,12 +28,12 @@ public class UpdateApkUseCase {
                 .filter(a -> a.packageName().equalsIgnoreCase(input.packageName()))
                 .findFirst()
                 .ifPresent(sibling ->
-                        ApkTypeConsistency.assertSameTypeAndClient(sibling, input.type(), input.client()));
+                        ApkTypeConsistency.assertSameTypeAndClient(sibling, input.type(), input.clientId()));
 
         // Reconstrói a entidade mantendo o mesmo id e PRESERVANDO o flag principal
         // (a troca de versão principal é feita por SetPrincipalApkUseCase, não pela edição).
         Apk updated = new Apk(input.id(), input.apkFileName(), input.packageName(),
-                input.label(), input.versionName(), input.versionCode(), input.client(),
+                input.label(), input.versionName(), input.versionCode(), input.clientId(),
                 input.type(), input.status(), input.cloudPath(), existing.principal());
         repository.save(updated);
         return updated;
