@@ -7,10 +7,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-/**
- * UI controller for the Profile (Smart Package) view. Prototype-scoped Spring bean
- * instantiated by the FXMLLoader controller factory.
- */
 @Component
 @Scope("prototype")
 public class ProfileViewController {

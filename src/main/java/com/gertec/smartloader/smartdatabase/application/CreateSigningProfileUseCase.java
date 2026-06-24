@@ -28,14 +28,13 @@ public class CreateSigningProfileUseCase {
         if (repository.existsByName(input.name().trim()))
             throw new IllegalArgumentException("já existe uma assinatura com este nome");
 
-        // Validação real da chave no momento do cadastro: se for inconsistente, não adiciona.
+
         KeystoreValidator.Result validation = keystoreValidator.validate(
                 input.keystorePath(), input.keyAlias(),
                 input.keystorePassword(), input.keyPassword());
         if (!validation.valid())
             throw new IllegalArgumentException("Chave inválida: " + validation.message());
 
-        // Chave validada com sucesso: nasce ATIVA (a menos que o usuário tenha escolhido outro status).
         SigningProfileStatus status = input.status() == null ? SigningProfileStatus.ATIVA : input.status();
 
         SigningProfile profile = SigningProfile.create(

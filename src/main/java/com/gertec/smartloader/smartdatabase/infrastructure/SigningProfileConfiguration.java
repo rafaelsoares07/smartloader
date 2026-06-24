@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SigningProfileConfiguration {
 
-    // Esta configuração cuida APENAS dos beans de assinatura (não mistura APK nem Terminal).
     @Bean
     public SigningProfileRepository signingProfileRepository() {
         return new InMemorySigningProfileRepository();

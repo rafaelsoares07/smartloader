@@ -9,8 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-// Implementação InMemory: as senhas permanecem apenas em memória de processo.
-// Nada é gravado em arquivo/banco em texto puro por enquanto.
+
 public class InMemorySigningProfileRepository implements SigningProfileRepository {
 
     private final Map<String, SigningProfile> data = new ConcurrentHashMap<>();

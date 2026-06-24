@@ -18,7 +18,6 @@ public class UpdateTerminalUseCase {
         if (repository.findById(input.id()).isEmpty())
             throw new IllegalArgumentException("Terminal não encontrado para edição");
 
-        // Reconstrói o terminal mantendo o mesmo id; a validação vive no domínio.
         TerminalModel updated = new TerminalModel(input.id(), input.terminalName(), input.terminalType(), input.odmId());
         repository.save(updated);
         return updated;

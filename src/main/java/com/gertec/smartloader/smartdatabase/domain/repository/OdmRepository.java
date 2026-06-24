@@ -1,7 +1,6 @@
 package com.gertec.smartloader.smartdatabase.domain.repository;
 
-// O domínio define o contrato (salvar, atualizar, remover, consultar) — não COMO isso é feito.
-// A entidade Odm não conhece esta interface.
+
 
 import com.gertec.smartloader.smartdatabase.domain.entity.Odm;
 

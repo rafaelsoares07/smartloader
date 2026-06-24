@@ -9,11 +9,7 @@ import com.gertec.smartloader.smartdatabase.domain.repository.TerminalModelRepos
 
 import java.util.Optional;
 
-// Resolve a cadeia terminal → odmId → ODM → signatureId → SigningProfile.
-//
-// Decisão de design: o terminal precisa existir (input válido) — caso contrário lança erro.
-// Já as lacunas da cadeia (ODM removida, ODM sem assinatura, ou assinatura inexistente)
-// não são erro: significam apenas "ainda não há assinatura resolvível" e devolvem Optional.empty().
+
 public class ResolveSignatureForTerminalUseCase {
 
     private final TerminalModelRepository terminalModelRepository;

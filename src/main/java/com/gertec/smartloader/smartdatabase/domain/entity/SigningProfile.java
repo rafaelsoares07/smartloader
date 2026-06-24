@@ -6,29 +6,24 @@ import com.gertec.smartloader.smartdatabase.domain.enums.SigningProfileType;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-// Entidade pura: apenas Java, sem JavaFX nem Spring. As validações de invariante vivem aqui.
-//
-// ATENÇÃO — dados sensíveis:
-// keystorePassword e keyPassword são segredos. Eles ficam apenas em memória (impl InMemory).
-// O toString() NUNCA expõe as senhas reais; qualquer log/Alert/DTO deve respeitar isso.
+
 public final class SigningProfile {
 
-    // Máscara fixa usada em toString para nunca revelar tamanho/conteúdo das senhas.
     private static final String SECRET_MASK = "****";
 
     private final String id;
     private final String name;
-    private final String keystorePath;        // caminho/referência do arquivo .jks ou .keystore
+    private final String keystorePath;
     private final String keyAlias;
-    private final String keystorePassword;     // sensível — não logar, não exibir
-    private final String keyPassword;          // sensível — não logar, não exibir
+    private final String keystorePassword;
+    private final String keyPassword;
     private final SigningProfileType type;
     private final SigningProfileStatus status;
-    private final String note;                 // observação opcional
+    private final String note;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    // Construtor de reconstrução: recria um perfil já existente (persistência / edição) mantendo o id.
+
     public SigningProfile(String id, String name, String keystorePath, String keyAlias,
                           String keystorePassword, String keyPassword,
                           SigningProfileType type, SigningProfileStatus status, String note,
@@ -67,7 +62,7 @@ public final class SigningProfile {
         this.updatedAt = updatedAt;
     }
 
-    // Fábrica para um perfil NOVO: o domínio gera o id e os timestamps.
+
     public static SigningProfile create(String name, String keystorePath, String keyAlias,
                                         String keystorePassword, String keyPassword,
                                         SigningProfileType type, SigningProfileStatus status, String note) {
@@ -76,8 +71,7 @@ public final class SigningProfile {
                 keystorePassword, keyPassword, type, status, note, now, now);
     }
 
-    // Devolve uma cópia com novo status (e updatedAt renovado), preservando todo o restante.
-    // Usado pela validação do keystore para marcar ATIVA / INVALIDA sem mutar a entidade original.
+
     public SigningProfile withStatus(SigningProfileStatus newStatus) {
         return new SigningProfile(id, name, keystorePath, keyAlias, keystorePassword, keyPassword,
                 type, newStatus, note, createdAt, LocalDateTime.now());
@@ -99,7 +93,7 @@ public final class SigningProfile {
     public LocalDateTime createdAt() { return createdAt; }
     public LocalDateTime updatedAt() { return updatedAt; }
 
-    // Nome do arquivo (sem o caminho) — conveniência para exibição na tabela.
+
     public String keystoreFileName() {
         if (keystorePath == null || keystorePath.isBlank()) return "";
         String normalized = keystorePath.replace('\\', '/');
@@ -107,7 +101,6 @@ public final class SigningProfile {
         return slash >= 0 ? normalized.substring(slash + 1) : normalized;
     }
 
-    // Importante: jamais incluir keystorePassword/keyPassword reais aqui.
     @Override
     public String toString() {
         return "SigningProfile{" +

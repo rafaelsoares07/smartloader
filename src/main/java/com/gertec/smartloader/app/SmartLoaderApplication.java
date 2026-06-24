@@ -9,16 +9,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import java.util.Objects;
 
-/**
- * JavaFX application that hosts the Spring (DI-only) container.
- *
- * <ul>
- *   <li>{@code init()} — starts a non-web {@link AnnotationConfigApplicationContext}.</li>
- *   <li>{@code start()} — loads the main shell FXML through the Spring-backed
- *       {@link SpringFxmlLoader}, applies the single theme stylesheet and shows the stage.</li>
- *   <li>{@code stop()} — closes the Spring context.</li>
- * </ul>
- */
 public class SmartLoaderApplication extends Application {
 
     private static final String MAIN_SHELL_FXML = "/fxml/main-shell.fxml";

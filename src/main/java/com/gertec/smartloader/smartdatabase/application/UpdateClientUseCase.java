@@ -20,7 +20,6 @@ public class UpdateClientUseCase {
         if (input.name() == null || input.name().isBlank())
             throw new IllegalArgumentException("Cliente deve ter algum nome");
 
-        // Só bloqueia duplicidade se o nome realmente mudou para um já existente.
         String newName = input.name().trim();
         if (!existing.name().equalsIgnoreCase(newName) && repository.existsByName(newName))
             throw new IllegalArgumentException("já existe um cliente com este nome");

@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class TerminalModelConfiguration {
 
-    // Daqui para baixo que importa: esta configuração cuida APENAS dos beans de terminal.
     @Bean
     public TerminalModelRepository terminalModelRepository() {
         return new InMemoryTerminalModelRepository();

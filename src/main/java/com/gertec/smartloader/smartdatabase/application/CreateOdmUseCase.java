@@ -20,7 +20,7 @@ public class CreateOdmUseCase {
         if (repository.existsByName(input.name().trim()))
             throw new IllegalArgumentException("já existe uma ODM com este nome");
 
-        // A ODM nasce sem assinatura; o vínculo é feito depois via AssignSignatureToOdmUseCase.
+        // A ODM nasce sem assinatura o vínculo é feito depois via AssignSignatureToOdmUseCase.
         Odm odm = Odm.create(input.name().trim());
         repository.save(odm);
         return odm;

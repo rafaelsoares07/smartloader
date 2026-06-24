@@ -21,8 +21,6 @@ public class UpdateApkUseCase {
         Apk existing = repository.findById(input.id())
                 .orElseThrow(() -> new IllegalArgumentException("APK não encontrado para edição"));
 
-        // Tipo e cliente do app são selados pela primeira versão: a edição não pode divergir
-        // das demais versões do mesmo pacote (não muda de tipo nem troca de cliente).
         repository.findAll().stream()
                 .filter(a -> !a.id().equals(input.id()))
                 .filter(a -> a.packageName().equalsIgnoreCase(input.packageName()))
@@ -30,8 +28,7 @@ public class UpdateApkUseCase {
                 .ifPresent(sibling ->
                         ApkTypeConsistency.assertSameTypeAndClient(sibling, input.type(), input.clientId()));
 
-        // Reconstrói a entidade mantendo o mesmo id e PRESERVANDO o flag principal
-        // (a troca de versão principal é feita por SetPrincipalApkUseCase, não pela edição).
+
         Apk updated = new Apk(input.id(), input.apkFileName(), input.packageName(),
                 input.label(), input.versionName(), input.versionCode(), input.clientId(),
                 input.type(), input.status(), input.cloudPath(), existing.principal());

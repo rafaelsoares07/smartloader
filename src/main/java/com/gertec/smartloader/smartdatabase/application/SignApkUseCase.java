@@ -5,24 +5,6 @@ import com.gertec.smartloader.smartdatabase.domain.repository.SigningProfileRepo
 
 import java.io.File;
 
-/**
- * Prepara a assinatura de um APK usando um {@link SigningProfile} já cadastrado.
- *
- * <p><b>Estado atual:</b> apenas a estrutura está pronta. A assinatura real (via {@code apksigner}
- * do Android SDK) ainda NÃO é executada — ver {@code TODO} em {@link #execute(Input)}.</p>
- *
- * <p>Diretrizes de segurança para a implementação futura:</p>
- * <ul>
- *   <li>NÃO passar senhas diretamente na linha de comando (ficam visíveis na lista de processos).
- *       Preferir entrada via stdin do {@code apksigner} ou variáveis de ambiente.</li>
- *   <li>Validar que o {@code apksigner} existe antes de invocá-lo.</li>
- *   <li>Validar que o APK de entrada existe.</li>
- *   <li>Validar que a saída assinada foi de fato gerada.</li>
- *   <li>Devolver sucesso/erro de forma clara para a UI, sem vazar senhas em mensagens/logs.</li>
- * </ul>
- *
- * <p>Camada de application: sem dependência de JavaFX ou Spring.</p>
- */
 public class SignApkUseCase {
 
     private final SigningProfileRepository repository;

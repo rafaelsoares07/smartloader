@@ -3,10 +3,6 @@ package com.gertec.smartloader.smartdatabase.application;
 import com.gertec.smartloader.smartdatabase.domain.entity.Apk;
 import com.gertec.smartloader.smartdatabase.domain.repository.ApkRepository;
 
-/**
- * Define qual versão é a "principal/atual" de um pacote. Mantém a invariante de
- * <b>uma única versão principal por packageName</b>: marca a escolhida e desmarca as irmãs.
- */
 public class SetPrincipalApkUseCase {
 
     private final ApkRepository repository;

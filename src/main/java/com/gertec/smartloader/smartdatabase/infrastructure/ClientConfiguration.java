@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ClientConfiguration {
 
-    // Esta configuração cuida APENAS dos beans de Cliente (não mistura APK/ODM/Terminal/Assinatura).
     @Bean
     public ClientRepository clientRepository() {
         return new InMemoryClientRepository();

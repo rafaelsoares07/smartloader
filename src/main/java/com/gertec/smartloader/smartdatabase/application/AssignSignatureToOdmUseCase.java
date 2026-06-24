@@ -4,7 +4,6 @@ import com.gertec.smartloader.smartdatabase.domain.entity.Odm;
 import com.gertec.smartloader.smartdatabase.domain.repository.OdmRepository;
 import com.gertec.smartloader.smartdatabase.domain.repository.SigningProfileRepository;
 
-// É este use case que materializa o vínculo ODM ↔ Signature (1:1).
 public class AssignSignatureToOdmUseCase {
 
     private final OdmRepository odmRepository;

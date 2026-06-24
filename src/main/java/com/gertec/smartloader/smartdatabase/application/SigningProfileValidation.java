@@ -2,8 +2,6 @@ package com.gertec.smartloader.smartdatabase.application;
 
 import java.util.Locale;
 
-// Regras de validação compartilhadas entre os use cases de criar/atualizar assinatura.
-// Mantém a duplicação fora dos use cases sem vazar regra para a UI.
 final class SigningProfileValidation {
 
     private SigningProfileValidation() {}

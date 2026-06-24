@@ -17,8 +17,7 @@ public class RemoveApkUseCase {
         Optional<Apk> removed = repository.findById(id);
         repository.deleteById(id);
 
-        // Mantém a invariante "todo pacote tem uma versão principal": se a versão excluída
-        // era a principal e ainda restam irmãs, promove a mais recente (maior versionCode).
+
         if (removed.isEmpty() || !removed.get().principal()) {
             return;
         }

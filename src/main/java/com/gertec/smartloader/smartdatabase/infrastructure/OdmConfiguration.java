@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OdmConfiguration {
 
-    // Esta configuração cuida APENAS dos beans de ODM (não mistura Terminal nem Assinatura).
     @Bean
     public OdmRepository odmRepository() {
         return new InMemoryOdmRepository();

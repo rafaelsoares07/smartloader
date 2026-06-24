@@ -8,13 +8,7 @@ import net.dongliu.apk.parser.bean.ApkMeta;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Adapter que lê os metadados do APK com a biblioteca {@code net.dongliu:apk-parser}
- * (decodifica o AndroidManifest binário, sem precisar do aapt/Android SDK).
- *
- * <p>Toda dependência de terceiro fica confinada aqui, na infraestrutura — o port
- * {@link ApkAnalyzer} mantém o domínio/aplicação livres dela.</p>
- */
+
 public class ApkParserAnalyzer implements ApkAnalyzer {
 
     @Override

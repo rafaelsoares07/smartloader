@@ -18,7 +18,7 @@ public class CreateTerminalUseCase {
     public record Input(String terminalName, TerminalType terminalType, String odmId) {}
 
     public TerminalModel execute(Input input) {
-        // Todo terminal precisa pertencer a uma ODM existente.
+
         if (odmRepository.findById(input.odmId()).isEmpty())
             throw new IllegalArgumentException("ODM não encontrada para o terminal");
 

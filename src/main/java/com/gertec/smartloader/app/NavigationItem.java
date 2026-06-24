@@ -1,12 +1,5 @@
 package com.gertec.smartloader.app;
 
-/**
- * The navigation targets owned by the app shell.
- *
- * <p>Only the {@code app} package knows the FXML locations of the three features; the
- * features never import one another. Each item carries its breadcrumb and the absolute
- * classpath path of the FXML to load into the content area.</p>
- */
 public enum NavigationItem {
 
     DASHBOARD("Dashboard", "HOME / Dashboard", "/fxml/dashboard-view.fxml"),

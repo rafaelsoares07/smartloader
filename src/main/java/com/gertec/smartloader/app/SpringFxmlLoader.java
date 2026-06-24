@@ -9,13 +9,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;
 
-/**
- * Loads an FXML resource with its controller resolved by Spring.
- *
- * <p>Centralizes the rule "the FXMLLoader controller factory delegates to the Spring
- * context" ({@code loader.setControllerFactory(context::getBean)}), so view controllers
- * are real Spring beans with constructor injection.</p>
- */
 @Component
 public class SpringFxmlLoader {
 

@@ -2,9 +2,7 @@ package com.gertec.smartloader.smarthub.application;
 
 import com.gertec.smartloader.smarthub.domain.ModuleInfo;
 
-/**
- * Application use case for the Recording feature. Plain POJO with NO framework annotation.
- */
+
 public class ModuleInfoUseCase {
 
     private final ModuleInfo moduleInfo;

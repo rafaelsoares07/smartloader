@@ -8,9 +8,9 @@ public final class TerminalModel {
     private final String id;
     private final String terminalName;
     private final TerminalType terminalType;
-    private final String odmId; // obrigatório — todo terminal pertence a uma ODM
+    private final String odmId;
 
-    // Construtor de reconstrução: recria um terminal que já existe (veio da persistência).
+
     public TerminalModel(String id, String terminalName, TerminalType terminalType, String odmId) {
         if (id == null || id.isBlank())
             throw new IllegalArgumentException("id é obrigatório");

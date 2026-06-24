@@ -5,24 +5,21 @@ import com.gertec.smartloader.smartdatabase.domain.enums.ApkType;
 
 import java.util.UUID;
 
-// Entidade pura apenas java, não conhece frameworks, deve ter validações internas.
-// Não botamos JPA aqui porque ia travar e depender dele.
+
 public final class Apk {
 
     private final String id;
-    private final String apkFileName;   // nome do arquivo .apk (ex.: meuapp-1.0.0.apk)
-    private final String packageName;   // ex.: com.gertec.app
-    private final String label;         // nome amigável exibido
-    private final String versionName;   // ex.: 1.0.0
-    private final long versionCode;     // ex.: 100
-    private final String clientId;      // id do cliente dono/solicitante (vazio = Padrão Gertec)
-    private final ApkType type;         // GERTEC ou CLIENTE
-    private final ApkStatus status;     // ATIVO, PENDENTE, INATIVO
-    private final String cloudPath;     // referência/caminho do arquivo em nuvem
-    private final boolean principal;    // versão "principal/atual" do pacote (1 por packageName)
+    private final String apkFileName;
+    private final String packageName;
+    private final String label;
+    private final String versionName;
+    private final long versionCode;
+    private final String clientId;
+    private final ApkType type;
+    private final ApkStatus status;
+    private final String cloudPath;
+    private final boolean principal;
 
-    // Construtor "de reconstrução": usado para recriar um Apk vindo da persistência
-    // ou para regravar um Apk editado mantendo o mesmo id.
     public Apk(String id, String apkFileName, String packageName, String label,
                String versionName, long versionCode, String clientId,
                ApkType type, ApkStatus status, String cloudPath, boolean principal) {
@@ -54,8 +51,7 @@ public final class Apk {
         this.principal = principal;
     }
 
-    // Fábrica para um Apk NOVO: o domínio gera o próprio id (não depende do banco).
-    // Nasce como não-principal; a promoção é feita depois (SetPrincipalApkUseCase / primeira versão).
+
     public static Apk create(String apkFileName, String packageName, String label,
                              String versionName, long versionCode, String clientId,
                              ApkType type, ApkStatus status, String cloudPath) {
@@ -63,7 +59,6 @@ public final class Apk {
                 versionName, versionCode, clientId, type, status, cloudPath, false);
     }
 
-    // Devolve uma cópia com o flag principal alterado, preservando o restante.
     public Apk withPrincipal(boolean newPrincipal) {
         return new Apk(id, apkFileName, packageName, label, versionName, versionCode,
                 clientId, type, status, cloudPath, newPrincipal);

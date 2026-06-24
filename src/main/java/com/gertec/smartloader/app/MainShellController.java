@@ -10,10 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.EnumMap;
 import java.util.Map;
 
-/**
- * Controls the navigation shell: sidebar selection, breadcrumb and the swap of the
- * central content area. This shell does not belong to any feature — it orchestrates them.
- */
+
 @Component
 public class MainShellController {
 

@@ -80,16 +80,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Coordinates the Smart Database screen (APK + Terminal + ODM + Signing repositories).
- *
- * <p>This controller only wires widgets and calls use cases — no business rules and no
- * direct persistence access. Filtering of the visible rows is a pure UI concern.</p>
- *
- * <p>Interaction pattern (uniform across sections): <b>add</b> and <b>edit</b> open a modal
- * dialog; the editing form never lives in the card. Edit/Delete buttons are disabled until a
- * row is selected. Selecting a row has no side effect on the screen.</p>
- */
 @Component
 @Scope("prototype")
 public class CatalogViewController {
@@ -269,23 +259,13 @@ public class CatalogViewController {
         refreshAll();
     }
 
-    /**
-     * Recarrega TODOS os masters e reconstrói as árvores derivadas, na ordem em que as
-     * resoluções de nome dependem umas das outras (a fonte do nome é carregada antes de quem
-     * a referencia: assinaturas → ODMs → terminais; clientes → APKs).
-     *
-     * <p>É a única forma de atualização chamada após qualquer mutação. Centralizar aqui
-     * elimina a classe de bug "referência cruzada defasada na tela": como cada
-     * {@code master.setAll(...)} força o re-render e as colunas resolvem o nome cruzado na
-     * hora ({@code odmNameFor}, {@code signatureNameFor}, {@code clientNameFor}), nenhuma
-     * tabela fica com nome antigo após renomear/excluir uma entidade referenciada.</p>
-     */
+
     private void refreshAll() {
-        refreshClients();         // clientMaster (+ rebuildClientTree)
-        refreshSigningProfiles(); // signingMaster  → fonte do nome exibido nas ODMs
-        refreshOdms();            // odmMaster       → fonte do nome exibido nos Terminais
-        refreshTerminals();       // terminalMaster  (re-resolve nome da ODM)
-        refreshApks();            // apkMaster (+ rebuild árvores APK e Clientes)
+        refreshClients();
+        refreshSigningProfiles();
+        refreshOdms();
+        refreshTerminals();
+        refreshApks();
     }
 
     private void configureSummaryCards() {
@@ -296,10 +276,7 @@ public class CatalogViewController {
         clientCountLabel.textProperty().bind(Bindings.size(clientMaster).asString());
     }
 
-    /**
-     * Habilita Editar/Excluir só quando há linha selecionada e bloqueia "Adicionar terminal"
-     * enquanto não existir nenhuma ODM (dependência: todo terminal pertence a uma ODM).
-     */
+
     private void configureActionButtonStates() {
         bindToSelection(odmEditButton, odmTable);
         bindToSelection(odmDeleteButton, odmTable);
@@ -307,8 +284,7 @@ public class CatalogViewController {
         bindToSelection(terminalDeleteButton, terminalTable);
         bindToSelection(signingEditButton, signingTable);
         bindToSelection(signingDeleteButton, signingTable);
-        // Clientes também são uma árvore (cliente → app → versões):
-        // Editar/Excluir agem sobre o cliente; "Tornar principal" sobre uma versão não-principal.
+
         var clientSelection = clientTree.getSelectionModel().selectedItemProperty();
         clientEditButton.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> selectedClient() == null, clientSelection));
@@ -317,19 +293,18 @@ public class CatalogViewController {
         clientSetPrincipalButton.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> selectedClientApk() == null || selectedClientApk().principal(), clientSelection));
 
-        // APK é uma árvore: "Nova versão" vale para app (grupo) ou versão selecionada;
-        // Editar/Excluir só fazem sentido sobre uma versão (linha-folha).
+
         var apkSelection = apkTree.getSelectionModel().selectedItemProperty();
         apkNewVersionButton.disableProperty().bind(apkSelection.isNull());
         apkEditButton.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> selectedApk() == null, apkSelection));
         apkDeleteButton.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> selectedApk() == null, apkSelection));
-        // "Tornar principal" só faz sentido sobre uma versão que ainda NÃO é a principal.
+
         apkSetPrincipalButton.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> selectedApk() == null || selectedApk().principal(), apkSelection));
 
-        // Dependência: sem ODM não há como adicionar terminal.
+
         terminalAddButton.disableProperty().bind(Bindings.isEmpty(odmMaster));
         terminalOdmHint.visibleProperty().bind(Bindings.isEmpty(odmMaster));
         terminalOdmHint.managedProperty().bind(terminalOdmHint.visibleProperty());
@@ -341,11 +316,6 @@ public class CatalogViewController {
 
     // ===================== APK section =====================
 
-    /**
-     * Linha da árvore de APKs. Pode ser um GRUPO (um app/pacote) ou uma VERSÃO (um Apk real).
-     * Para o grupo, {@code apk} aponta para a versão mais recente — assim "Nova versão" a partir
-     * do grupo herda os dados certos. {@code current} marca a versão vigente (maior versionCode).
-     */
     private record ApkRow(boolean group, String title, String version, String subtitle, String client,
                           ApkType type, boolean current, Apk apk) {}
 
@@ -374,19 +344,16 @@ public class CatalogViewController {
         apkTree.setShowRoot(false);
         apkTree.setRoot(new TreeItem<>(new ApkRow(true, "", "", "", "", null, false, null)));
 
-        // Busca e filtro reconstroem a árvore aplicando o predicado já existente.
+
         apkSearchField.textProperty().addListener((o, old, val) -> rebuildApkTree());
         apkTypeFilter.valueProperty().addListener((o, old, val) -> rebuildApkTree());
     }
 
-    /**
-     * (Re)constrói a árvore agrupando os APKs por packageName: cada pacote é um app-pai e suas
-     * versões são as folhas (ordenadas da mais nova para a mais antiga). Respeita busca/filtro.
-     */
+
     private void rebuildApkTree() {
         java.util.function.Predicate<Apk> predicate = apkPredicate();
 
-        // Agrupa por pacote preservando ordem de inserção dos grupos.
+
         Map<String, List<Apk>> byPackage = new LinkedHashMap<>();
         for (Apk apk : apkMaster) {
             if (predicate.test(apk)) {
@@ -397,7 +364,7 @@ public class CatalogViewController {
         List<TreeItem<ApkRow>> groups = new ArrayList<>();
         for (Map.Entry<String, List<Apk>> entry : byPackage.entrySet()) {
             List<Apk> versions = entry.getValue();
-            // Mais nova primeiro; a de maior versionCode é a "atual".
+
             versions.sort(Comparator.comparingLong(Apk::versionCode).reversed());
             Apk latest = versions.get(0);
 
@@ -408,8 +375,7 @@ public class CatalogViewController {
             groupItem.setExpanded(true);
 
             for (Apk version : versions) {
-                // A versão fica na coluna dedicada; o nome do app vem da linha-pai (grupo).
-                // O selo "ATUAL" segue o flag principal (escolha manual), não o versionCode.
+
                 ApkRow leaf = new ApkRow(false, "", version.versionName(), version.apkFileName(),
                         clientNameFor(version.clientId()), version.type(),
                         version.principal(), version);
@@ -418,18 +384,18 @@ public class CatalogViewController {
             groups.add(groupItem);
         }
 
-        // Ordena os apps pelo nome exibido (case-insensitive).
+
         groups.sort(Comparator.comparing(g -> safeLower(g.getValue().title())));
         apkTree.getRoot().getChildren().setAll(groups);
     }
 
-    /** APK selecionado na árvore, ou null se nada/um grupo estiver selecionado. */
+
     private Apk selectedApk() {
         TreeItem<ApkRow> item = apkTree.getSelectionModel().getSelectedItem();
         return item != null && !item.getValue().group() ? item.getValue().apk() : null;
     }
 
-    /** Linha selecionada (grupo ou versão), ou null. Usada pelo fluxo de "Nova versão". */
+
     private ApkRow selectedApkRow() {
         TreeItem<ApkRow> item = apkTree.getSelectionModel().getSelectedItem();
         return item != null ? item.getValue() : null;
@@ -454,14 +420,14 @@ public class CatalogViewController {
 
     @FXML
     private void onAddApk() {
-        // Fluxo "arquivo primeiro": escolhe o .apk e os campos vêm da análise do próprio arquivo.
+
         File file = chooseApkFile();
         if (file == null) {
             return;
         }
         ApkAnalyzer.ApkMetadata meta = analyzeApkFile(file);
         if (meta == null) {
-            return; // erro já exibido ao usuário
+            return;
         }
         ApkForm prefill = new ApkForm(meta.fileName(), meta.packageName(), meta.label(),
                 meta.versionName(), meta.versionCode(), "", ApkType.GERTEC, ApkStatus.PENDENTE,
@@ -484,9 +450,7 @@ public class CatalogViewController {
 
     @FXML
     private void onNewApkVersion() {
-        // Nova versão de um APK existente: cadastra uma NOVA linha vinculada ao mesmo pacote
-        // (histórico preservado). Herda cliente/tipo/label; versão e arquivo vêm do novo .apk.
-        // Funciona a partir do app (grupo, usa a versão mais recente) ou de uma versão específica.
+
         ApkRow row = selectedApkRow();
         if (row == null || row.apk() == null) {
             showError("Selecione na árvore o app ou a versão da qual quer cadastrar uma nova versão.");
@@ -501,7 +465,7 @@ public class CatalogViewController {
         if (meta == null) {
             return;
         }
-        // O vínculo entre versões é o packageName. Se o arquivo for de outro pacote, confirma.
+
         if (!selected.packageName().equalsIgnoreCase(meta.packageName())
                 && !confirmAction("O arquivo escolhido é do pacote \"" + meta.packageName()
                 + "\", diferente do APK selecionado (\"" + selected.packageName()
@@ -584,7 +548,7 @@ public class CatalogViewController {
         return chooser.showOpenDialog(apkTree.getScene().getWindow());
     }
 
-    /** Analisa o .apk; em caso de falha mostra um aviso e devolve null. */
+
     private ApkAnalyzer.ApkMetadata analyzeApkFile(File file) {
         try {
             return analyzeApk.execute(file.getAbsolutePath());
@@ -597,7 +561,7 @@ public class CatalogViewController {
     private void refreshApks() {
         apkMaster.setAll(listApks.execute());
         rebuildApkTree();
-        rebuildClientTree(); // a árvore de clientes deriva dos APKs (apps vinculados)
+        rebuildClientTree();
     }
 
     private void showApkDetails(Apk apk) {
@@ -616,24 +580,18 @@ public class CatalogViewController {
         alert.showAndWait();
     }
 
-    /** Form fields collected by the APK dialog (UI-only transport). */
+
     private record ApkForm(String apkFileName, String packageName, String label, String versionName,
                            long versionCode, String clientId, ApkType type, ApkStatus status,
                            String cloudPath, boolean principal) {}
 
-    /** Converte um Apk persistido em ApkForm para pré-preencher o diálogo de edição. */
     private ApkForm formOf(Apk apk) {
         return new ApkForm(apk.apkFileName(), apk.packageName(), apk.label(), apk.versionName(),
                 apk.versionCode(), apk.clientId(), apk.type(), apk.status(), apk.cloudPath(),
                 apk.principal());
     }
 
-    /**
-     * @param showPrincipalOption quando true, mostra a opção "Definir como versão principal"
-     *        (usado em adicionar/nova versão; na edição o principal é preservado).
-     * @param lockOrigin quando true, trava o seletor de Cliente/Origem: o app mantém o tipo e o
-     *        cliente da primeira versão (não pode mudar ao adicionar nova versão nem na edição).
-     */
+
     private Optional<ApkForm> showApkDialog(String title, ApkForm prefill,
                                             boolean showPrincipalOption, boolean lockOrigin) {
         Dialog<ApkForm> dialog = newFormDialog(title);
@@ -649,8 +607,7 @@ public class CatalogViewController {
         versionName.setPromptText("versão (ex.: 1.0.0)");
         TextField versionCode = new TextField();
         versionCode.setPromptText("versionCode (ex.: 100)");
-        // Origem do APK: "Padrão Gertec" (sem cliente) ou um cliente cadastrado.
-        // A escolha define o type (GERTEC/CLIENTE) e o nome do cliente gravado no APK.
+
         ComboBox<ClientChoice> origin = new ComboBox<>();
         origin.setMaxWidth(Double.MAX_VALUE);
         origin.getItems().add(new ClientChoice(null)); // "Padrão Gertec"
@@ -716,13 +673,12 @@ public class CatalogViewController {
         return dialog.showAndWait();
     }
 
-    /** UI-only: origem do APK no diálogo — "Padrão Gertec" (client null) ou um cliente cadastrado. */
+
     private record ClientChoice(Client client) {
         boolean isGertec() { return client == null; }
         String display() { return isGertec() ? "Padrão Gertec" : client.name(); }
     }
 
-    /** Pré-seleciona a origem do APK ao editar: o cliente gravado (se houver) ou "Padrão Gertec". */
     private ClientChoice originChoiceFor(List<ClientChoice> items, ApkForm prefill) {
         if (prefill != null && prefill.type() == ApkType.CLIENTE) {
             for (ClientChoice choice : items) {
@@ -791,7 +747,7 @@ public class CatalogViewController {
             try {
                 updateTerminal.execute(new UpdateTerminalUseCase.Input(
                         selected.id(), form.name(), form.type(), form.odm().id()));
-                refreshTerminals();
+                refreshAll();
                 flashStatus("Terminal atualizado.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -810,7 +766,7 @@ public class CatalogViewController {
             return;
         }
         removeTerminal.execute(selected.id());
-        refreshTerminals();
+        refreshAll();
         flashStatus("Terminal excluído.");
     }
 
@@ -833,7 +789,7 @@ public class CatalogViewController {
         alert.showAndWait();
     }
 
-    /** Form fields collected by the terminal dialog (UI-only transport). */
+
     private record TerminalForm(String name, TerminalType type, Odm odm) {}
 
     private Optional<TerminalForm> showTerminalDialog(String title, TerminalModel base) {
@@ -927,7 +883,7 @@ public class CatalogViewController {
                         form.keystorePassword(), form.keyPassword(),
                         form.type(), null, form.note()));
                 linkSignatureToOdm(created, form.linkedOdm());
-                refreshSigningProfiles();
+                refreshAll();
                 flashStatus("Assinatura adicionada.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -949,7 +905,7 @@ public class CatalogViewController {
                         form.keystorePassword(), form.keyPassword(),
                         form.type(), null, form.note()));
                 linkSignatureToOdm(selected, form.linkedOdm());
-                refreshSigningProfiles();
+                refreshAll();
                 flashStatus("Assinatura atualizada.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -957,15 +913,11 @@ public class CatalogViewController {
         });
     }
 
-    // Liga (1:1) a assinatura à ODM escolhida no diálogo. O vínculo é obrigatório: o diálogo
-    // já bloqueia o salvamento sem ODM, então aqui só guardamos contra null por segurança.
     private void linkSignatureToOdm(SigningProfile signature, Odm odm) {
         if (odm == null) {
             return;
         }
         assignSignatureToOdm.execute(new AssignSignatureToOdmUseCase.Input(odm.id(), signature.id()));
-        refreshOdms();
-        refreshTerminals();
     }
 
     @FXML
@@ -979,7 +931,7 @@ public class CatalogViewController {
             return;
         }
         removeSigningProfile.execute(selected.id());
-        refreshSigningProfiles();
+        refreshAll();
         flashStatus("Assinatura excluída.");
     }
 
@@ -987,7 +939,7 @@ public class CatalogViewController {
         signingMaster.setAll(listSigningProfiles.execute());
     }
 
-    /** Form fields collected by the signing dialog (UI-only transport). */
+
     private record SigningForm(String name, String alias, String keystorePath,
                                String keystorePassword, String keyPassword,
                                SigningProfileType type, String note, Odm linkedOdm) {}
@@ -1013,8 +965,7 @@ public class CatalogViewController {
         TextField note = new TextField();
         note.setPromptText("Observação");
 
-        // Seletor de arquivo do keystore, embutido no próprio diálogo.
-        // keystorePathHolder[0] guarda o caminho escolhido (ou o já existente, na edição).
+
         final String[] keystorePathHolder = { base != null ? base.keystorePath() : null };
         Label keystoreFileLabel = new Label(base != null ? base.keystoreFileName() : "Nenhum arquivo selecionado");
         keystoreFileLabel.getStyleClass().add("card-subtitle");
@@ -1042,7 +993,7 @@ public class CatalogViewController {
             type.setValue(base.type());
             note.setText(base.note());
             linkedOdm.setValue(findOdmBySignatureId(base.id()));
-            // Senhas ficam mascaradas no PasswordField (nunca em texto puro na tela).
+
             keystorePassword.setText(base.keystorePassword());
             keyPassword.setText(base.keyPassword());
         }
@@ -1080,11 +1031,11 @@ public class CatalogViewController {
         dialog.setTitle("Detalhes da assinatura");
         dialog.setHeaderText(profile.name());
 
-        // TESTAR CHAVE fica à esquerda; FECHAR encerra o diálogo.
+
         ButtonType testButton = new ButtonType("TESTAR CHAVE", ButtonBar.ButtonData.LEFT);
         dialog.getDialogPane().getButtonTypes().addAll(testButton, ButtonType.CLOSE);
 
-        // IMPORTANTE: nunca exibir keystorePassword/keyPassword aqui.
+
         Label info = new Label(
                 "Alias: " + profile.keyAlias() + "\n"
                         + "Tipo: " + profile.type() + "\n"
@@ -1103,7 +1054,7 @@ public class CatalogViewController {
         content.setPadding(new Insets(16));
         dialog.getDialogPane().setContent(content);
 
-        // Consome o evento do botão para o diálogo NÃO fechar ao testar.
+
         Button testBtn = (Button) dialog.getDialogPane().lookupButton(testButton);
         testBtn.addEventFilter(ActionEvent.ACTION, event -> {
             event.consume();
@@ -1145,7 +1096,7 @@ public class CatalogViewController {
             try {
                 // A ODM nasce só com o nome; a assinatura é vinculada na seção de Assinaturas.
                 createOdm.execute(new CreateOdmUseCase.Input(odmName));
-                refreshOdms();
+                refreshAll();
                 flashStatus("ODM criada.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -1163,7 +1114,7 @@ public class CatalogViewController {
         showOdmDialog("Editar ODM", selected).ifPresent(odmName -> {
             try {
                 updateOdm.execute(new UpdateOdmUseCase.Input(selected.id(), odmName));
-                refreshOdms();
+                refreshAll();
                 flashStatus("ODM atualizada.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -1183,8 +1134,7 @@ public class CatalogViewController {
             return;
         }
         removeOdm.execute(selected.id());
-        refreshOdms();
-        refreshTerminals();
+        refreshAll();
         flashStatus("ODM excluída.");
     }
 
@@ -1218,7 +1168,6 @@ public class CatalogViewController {
         alert.showAndWait();
     }
 
-    // Resolve o nome da assinatura a partir do id guardado na ODM (ou "—" quando não há vínculo).
     private String signatureNameFor(String signatureId) {
         SigningProfile profile = findSigningProfileById(signatureId);
         return profile != null ? profile.name() : "—";
@@ -1234,20 +1183,19 @@ public class CatalogViewController {
         return odmMaster.stream().filter(o -> o.id().equals(id)).findFirst().orElse(null);
     }
 
-    // Encontra a ODM que usa uma dada assinatura (vínculo 1:1), para pré-selecionar na edição.
+
     private Odm findOdmBySignatureId(String signatureId) {
         if (signatureId == null || signatureId.isBlank()) return null;
         return odmMaster.stream().filter(o -> signatureId.equals(o.signatureId())).findFirst().orElse(null);
     }
 
-    // Resolve o nome da ODM a partir do id guardado no terminal (ou "—" quando não encontrada).
+
     private String odmNameFor(String odmId) {
         Odm odm = findOdmById(odmId);
         return odm != null ? odm.name() : "—";
     }
 
-    // Resolve o nome do cliente a partir do id guardado no APK: vazio = Padrão Gertec (sem
-    // cliente, exibido em branco); id sem cliente correspondente = "—" (cliente removido).
+
     private String clientNameFor(String clientId) {
         if (clientId == null || clientId.isBlank()) return "";
         return clientMaster.stream()
@@ -1259,13 +1207,9 @@ public class CatalogViewController {
 
     // ===================== Client section =====================
 
-    /** Nível de uma linha da árvore de clientes: o cliente, um app vinculado ou uma versão. */
+
     private enum ClientRowKind { CLIENT, APP, VERSION }
 
-    /**
-     * Linha da árvore de clientes. CLIENT é o pai; APP é um pacote vinculado àquele cliente;
-     * VERSION é um Apk real. {@code current} segue o flag principal do pacote (selo "ATUAL").
-     */
     private record ClientRow(ClientRowKind kind, String title, String subtitle,
                              ApkType type, ApkStatus status, boolean current,
                              Client client, Apk apk) {}
@@ -1295,20 +1239,16 @@ public class CatalogViewController {
         clientSearchField.textProperty().addListener((o, old, val) -> rebuildClientTree());
     }
 
-    /**
-     * (Re)constrói a árvore de clientes: cada cliente é um pai; abaixo dele os aplicativos
-     * (pacotes) vinculados (APKs do tipo CLIENTE com aquele nome) e, dentro de cada app, as
-     * versões — da mais nova para a mais antiga, com o selo "ATUAL" na versão principal.
-     */
+
     private void rebuildClientTree() {
         if (clientTree == null || clientTree.getRoot() == null) {
-            return; // árvore ainda não configurada (chamado durante o boot)
+            return;
         }
         String search = safeLower(clientSearchField.getText());
 
         List<TreeItem<ClientRow>> clientItems = new ArrayList<>();
         for (Client client : clientMaster) {
-            // APKs vinculados a este cliente, agrupados por pacote.
+
             Map<String, List<Apk>> byPackage = new LinkedHashMap<>();
             for (Apk apk : apkMaster) {
                 if (apk.type() == ApkType.CLIENTE && client.id().equals(apk.clientId())) {
@@ -1344,7 +1284,6 @@ public class CatalogViewController {
                 appItems.add(appItem);
             }
 
-            // Não mostra o cliente se a busca não casou nem com ele nem com nenhum app.
             if (!nameMatches && appItems.isEmpty()) {
                 continue;
             }
@@ -1362,13 +1301,13 @@ public class CatalogViewController {
         clientTree.getRoot().getChildren().setAll(clientItems);
     }
 
-    /** Cliente selecionado na árvore (apenas em linha-pai de cliente), ou null. */
+
     private Client selectedClient() {
         TreeItem<ClientRow> item = clientTree.getSelectionModel().getSelectedItem();
         return item != null && item.getValue().kind() == ClientRowKind.CLIENT ? item.getValue().client() : null;
     }
 
-    /** Versão selecionada na árvore de clientes (apenas em linha-folha de versão), ou null. */
+
     private Apk selectedClientApk() {
         TreeItem<ClientRow> item = clientTree.getSelectionModel().getSelectedItem();
         return item != null && item.getValue().kind() == ClientRowKind.VERSION ? item.getValue().apk() : null;
@@ -1379,7 +1318,7 @@ public class CatalogViewController {
         showClientDialog("Novo cliente", null).ifPresent(name -> {
             try {
                 createClient.execute(new CreateClientUseCase.Input(name));
-                refreshClients();
+                refreshAll();
                 flashStatus("Cliente cadastrado.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -1397,9 +1336,8 @@ public class CatalogViewController {
         showClientDialog("Editar cliente", selected).ifPresent(name -> {
             try {
                 updateClient.execute(new UpdateClientUseCase.Input(selected.id(), name));
-                refreshClients();
-                // O vínculo é por id, então o rename não toca os APKs; só reexibe o novo nome.
-                rebuildApkTree();
+
+                refreshAll();
                 flashStatus("Cliente atualizado.");
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
@@ -1419,9 +1357,8 @@ public class CatalogViewController {
             return;
         }
         removeClient.execute(selected.id());
-        refreshClients();
-        // APKs que apontavam para este cliente passam a exibir "—"; reexibe a árvore de APKs.
-        rebuildApkTree();
+
+        refreshAll();
         flashStatus("Cliente excluído.");
     }
 
@@ -1433,7 +1370,7 @@ public class CatalogViewController {
             return;
         }
         setPrincipalApk.execute(selected.id());
-        refreshApks(); // recarrega APKs e reconstrói ambas as árvores (APK e clientes)
+        refreshAll();
         flashStatus("Versão v" + selected.versionName() + " definida como principal.");
     }
 
@@ -1462,7 +1399,7 @@ public class CatalogViewController {
 
     // ===================== Shared cell helpers =====================
 
-    /** Renders an enum value as a coloured badge; {@code styleResolver} picks the styleClass. */
+
     private <S, E extends Enum<E>> TableCell<S, E> badgeCell(java.util.function.Function<E, String> styleResolver) {
         return new TableCell<>() {
             @Override
@@ -1481,7 +1418,6 @@ public class CatalogViewController {
         };
     }
 
-    /** Renders a "VER" link button that runs {@code action} on the row's value. */
     private <S> TableCell<S, Void> actionCell(java.util.function.Consumer<S> action) {
         return new TableCell<>() {
             private final Button button = new Button("VER");
@@ -1498,9 +1434,6 @@ public class CatalogViewController {
         };
     }
 
-    // --- Tree (TreeTableView de APKs) cell helpers ---
-
-    /** Badge de enum para qualquer árvore; vazio em linhas sem o valor (item null). */
     private <R, E extends Enum<E>> TreeTableCell<R, E> treeBadgeCell(java.util.function.Function<E, String> styleResolver) {
         return new TreeTableCell<>() {
             @Override
@@ -1519,7 +1452,7 @@ public class CatalogViewController {
         };
     }
 
-    /** Selo "ATUAL" exibido apenas na versão vigente (current == true). */
+
     private <R> TreeTableCell<R, Boolean> currentBadgeCell() {
         return new TreeTableCell<>() {
             @Override
@@ -1538,7 +1471,7 @@ public class CatalogViewController {
         };
     }
 
-    /** Link "VER" para qualquer árvore; só aparece nas linhas em que {@code showFor} for verdadeiro. */
+
     private <R> TreeTableCell<R, Void> treeActionCell(java.util.function.Predicate<R> showFor,
                                                       java.util.function.Consumer<R> action) {
         return new TreeTableCell<>() {
@@ -1566,7 +1499,7 @@ public class CatalogViewController {
         return value == null ? "" : value.toLowerCase().trim();
     }
 
-    /** Devolve um diretório navegável para o FileChooser: o candidato se existir, senão a home. */
+
     private static File existingDirOrHome(File candidate) {
         if (candidate != null && candidate.isDirectory()) {
             return candidate;
@@ -1574,7 +1507,6 @@ public class CatalogViewController {
         return new File(System.getProperty("user.home"));
     }
 
-    /** Exibe entidades no ComboBox pelo texto escolhido (ex.: nome), preservando o objeto como valor. */
     private <T> void setComboDisplay(ComboBox<T> combo, java.util.function.Function<T, String> toText) {
         combo.setConverter(new javafx.util.StringConverter<>() {
             @Override public String toString(T item) { return item == null ? "" : toText.apply(item); }
@@ -1584,7 +1516,7 @@ public class CatalogViewController {
 
     // ===================== Dialog helpers =====================
 
-    /** Cria um diálogo de formulário padrão (sem header), reutilizado por todas as seções. */
+
     private <T> Dialog<T> newFormDialog(String title) {
         Dialog<T> dialog = new Dialog<>();
         dialog.setTitle(title);
@@ -1592,7 +1524,7 @@ public class CatalogViewController {
         return dialog;
     }
 
-    /** Adiciona o botão "Salvar" (OK) e "Cancelar" e devolve o tipo do Salvar. */
+
     private ButtonType addSaveButton(Dialog<?> dialog) {
         ButtonType saveButton = new ButtonType("Salvar", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButton, ButtonType.CANCEL);
@@ -1607,7 +1539,7 @@ public class CatalogViewController {
         return grid;
     }
 
-    /** Pede confirmação antes de uma exclusão; devolve true se o usuário confirmar. */
+
     private boolean confirmDelete(String message) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, message, ButtonType.OK, ButtonType.CANCEL);
         alert.setTitle("Confirmar exclusão");
@@ -1615,7 +1547,7 @@ public class CatalogViewController {
         return alert.showAndWait().filter(b -> b == ButtonType.OK).isPresent();
     }
 
-    /** Pede confirmação genérica (não destrutiva); devolve true se o usuário confirmar. */
+
     private boolean confirmAction(String message) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, message, ButtonType.OK, ButtonType.CANCEL);
         alert.setTitle("Confirmar");
@@ -1623,7 +1555,7 @@ public class CatalogViewController {
         return alert.showAndWait().filter(b -> b == ButtonType.OK).isPresent();
     }
 
-    /** Mostra uma mensagem de sucesso transitória que some sozinha após alguns segundos. */
+
     private void flashStatus(String message) {
         statusLabel.setText(message);
         statusLabel.setOpacity(1);

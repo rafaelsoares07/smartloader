@@ -33,8 +33,7 @@ public class CreateApkUseCase {
                 input.versionName(), input.versionCode(), input.clientId(),
                 input.type(), input.status(), input.cloudPath());
 
-        // Garante que todo pacote tenha uma versão principal: a PRIMEIRA versão de um pacote
-        // nasce principal. As demais nascem normais e são promovidas via SetPrincipalApkUseCase.
+
         if (existingVersions.isEmpty()) {
             apk = apk.withPrincipal(true);
         }
