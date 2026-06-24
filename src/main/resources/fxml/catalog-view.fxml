@@ -160,7 +160,7 @@
         </TitledPane>
 
         <!-- ============ Seção: Perfis de Clientes (alimenta o seletor de origem do APK) ============ -->
-        <TitledPane text="PERFIS DE CLIENTES" styleClass="repo-pane" expanded="false" animated="true">
+        <TitledPane text="4 · PERFIS DE CLIENTES" styleClass="repo-pane" expanded="false" animated="true">
             <VBox styleClass="repo-card" spacing="16">
 
                 <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
@@ -192,7 +192,7 @@
         </TitledPane>
 
         <!-- ============ Seção: Repositório de APKs (independente) ============ -->
-        <TitledPane text="REPOSITÓRIO DE APKS" styleClass="repo-pane" expanded="false" animated="true">
+        <TitledPane text="5 · REPOSITÓRIO DE APKS" styleClass="repo-pane" expanded="false" animated="true">
             <VBox styleClass="repo-card" spacing="16">
 
                 <HBox styleClass="card-header" spacing="12" alignment="CENTER_LEFT">
